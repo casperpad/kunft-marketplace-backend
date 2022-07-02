@@ -1,3 +1,4 @@
+import { Model } from 'mongoose'
 import { Schema, model } from 'mongoose'
 
 interface IAsset {
@@ -9,7 +10,9 @@ interface IAsset {
   metadata: string
 }
 
-const nftSchema = new Schema<IAsset>({
+type AssetModel = Model<IAsset>
+
+const nftSchema = new Schema<IAsset, AssetModel>({
   collectionNFT: {
     type: Schema.Types.ObjectId,
     required: true,
@@ -35,6 +38,6 @@ const nftSchema = new Schema<IAsset>({
   },
 })
 
-const Asset = model<IAsset>('Asset', nftSchema)
+const Asset = model<IAsset, AssetModel>('Asset', nftSchema)
 
 export default Asset

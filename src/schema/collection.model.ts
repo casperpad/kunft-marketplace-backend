@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { Schema, model, Model } from 'mongoose'
 
 interface ICollection {
   contractPackageHash: string
@@ -14,7 +14,9 @@ interface ICollection {
   website?: string
 }
 
-const collectionSchema = new Schema<ICollection>({
+type CollectionModel = Model<ICollection>
+
+const collectionSchema = new Schema<ICollection, CollectionModel>({
   contractPackageHash: {
     type: String,
     required: true,
@@ -37,6 +39,9 @@ const collectionSchema = new Schema<ICollection>({
   website: { type: String },
 })
 
-const Collection = model<ICollection>('Collection', collectionSchema)
+const Collection = model<ICollection, CollectionModel>(
+  'Collection',
+  collectionSchema,
+)
 
 export default Collection

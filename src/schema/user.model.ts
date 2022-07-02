@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'
+import { Schema, model, Model } from 'mongoose'
 
 interface IUser {
   name: string
@@ -9,7 +9,9 @@ interface IUser {
   // role:"user"|"minter"|"admin"
 }
 
-const userSchema = new Schema<IUser>({
+type UserModel = Model<IUser>
+
+const userSchema = new Schema<IUser, UserModel>({
   name: {
     type: String,
     required: true,
@@ -30,6 +32,6 @@ const userSchema = new Schema<IUser>({
   },
 })
 
-const User = model<IUser>('User', userSchema)
+const User = model<IUser, UserModel>('User', userSchema)
 
 export default User

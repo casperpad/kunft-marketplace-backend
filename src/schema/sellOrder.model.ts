@@ -1,3 +1,4 @@
+import { Model } from 'mongoose'
 import { Schema, model } from 'mongoose'
 
 interface ISellOrder {
@@ -11,7 +12,9 @@ interface ISellOrder {
   status: 'pending' | 'succeed' | 'canceled'
 }
 
-const sellOrderSchema = new Schema<ISellOrder>(
+type SellOrderModel = Model<ISellOrder>
+
+const sellOrderSchema = new Schema<ISellOrder, SellOrderModel>(
   {
     creator: {
       type: String,
@@ -47,6 +50,9 @@ const sellOrderSchema = new Schema<ISellOrder>(
   { timestamps: true },
 )
 
-const SellOrder = model<ISellOrder>('SellOrder', sellOrderSchema)
+const SellOrder = model<ISellOrder, SellOrderModel>(
+  'SellOrder',
+  sellOrderSchema,
+)
 
 export default SellOrder

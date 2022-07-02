@@ -8,17 +8,14 @@ import {
   EventStream,
   Keys,
 } from 'casper-js-sdk'
-import {
-  MarketplaceEventParser,
-  MarketplaceEvents,
-} from '../../../kunft-marketplace-contract/e2e/src/clients/marketplace'
-import { getAccountNamedKeyValue } from '../../../kunft-marketplace-contract/e2e/src/utils'
-import SellOrder from '../../../kunft-marketplace-contract/e2e/src/schema/sellOrder.model'
+import { MarketplaceEventParser, MarketplaceEvents } from './marketplace'
+import { getAccountNamedKeyValue } from './utils'
+import SellOrder from '../schema/sellOrder.model'
 
 const {
-  EVENT_STREAM_ADDRESS,
+  CASPER_EVENT_STREAM_ADDRESS,
   MONGODB_URL,
-  NODE_ADDRESS,
+  CASPER_NODE_ADDRESS,
   MARKETPLACE_CONTRACT_NAME,
   MASTER_KEY_PAIR_PATH,
 } = process.env
@@ -31,8 +28,8 @@ const public_key = Keys.Ed25519.privateToPublicKey(private_key)
 const KEYS = Keys.Ed25519.parseKeyPair(public_key, private_key)
 
 const startEventStream = async () => {
-  const es = new EventStream(EVENT_STREAM_ADDRESS!)
-  const casperClient = new CasperClient(NODE_ADDRESS!)
+  const es = new EventStream(CASPER_EVENT_STREAM_ADDRESS!)
+  const casperClient = new CasperClient(CASPER_NODE_ADDRESS!)
   const contractPackageHash = await getAccountNamedKeyValue(
     casperClient,
     KEYS.publicKey,

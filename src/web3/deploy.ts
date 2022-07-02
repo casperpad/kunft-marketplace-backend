@@ -2,7 +2,7 @@ import { config } from 'dotenv'
 config()
 import { CasperClient } from 'casper-js-sdk'
 
-const { NODE_ADDRESS } = process.env
+const { CASPER_NODE_ADDRESS } = process.env
 
 interface Argv {
   reamin: string[]
@@ -10,7 +10,7 @@ interface Argv {
   original: string[]
 }
 const main = async () => {
-  const client = new CasperClient(NODE_ADDRESS!)
+  const client = new CasperClient(CASPER_NODE_ADDRESS!)
 
   const argv: Argv = JSON.parse(process.env.npm_config_argv || '')
   const deploy_hash = argv.original[1]
