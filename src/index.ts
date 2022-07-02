@@ -11,14 +11,11 @@ import mongoose from 'mongoose'
 import responseTime from 'response-time'
 
 import redisClient from '@providers/redis'
+import { MONGODB_URL, PORT, SENTRY_DSN } from 'config'
 
 dotenv.config()
 
 const app = express()
-
-const PORT = process.env.PORT || 8000
-const SENTRY_DSN = process.env.SENTRY_DSN
-const MONGODB_URL = process.env.MONGODB_URL!
 
 // Global rate limiter
 const limiter = rateLimit({
