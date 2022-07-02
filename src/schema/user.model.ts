@@ -5,6 +5,7 @@ interface IUser {
   email?: string
   accountHash: string
   nonce: string
+  emailVerified: boolean
   // role:"user"|"minter"|"admin"
 }
 
@@ -17,6 +18,9 @@ const userSchema = new Schema<IUser>({
     type: String,
     unique: true,
     dropDups: true,
+  },
+  emailVerified: {
+    type: Boolean,
   },
   accountHash: {
     type: String,
