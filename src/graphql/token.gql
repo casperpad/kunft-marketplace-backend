@@ -1,0 +1,38 @@
+scalar Metadata
+scalar GraphQLDate
+scalar GraphQLLong
+
+type Sale {
+  creator: String!
+  price: String!
+  payToken: String
+  startTime: GraphQLLong!
+  status: String!
+  createdAt: GraphQLDate!
+  updatedAt: GraphQLDate!
+}
+
+type Token {
+  collectionNFT: Collection!
+  tokenId: String!
+  metadata: Metadata!
+  favoritedUsers: [String!]
+  viewed: Int!
+  price: String
+  listed: Boolean!
+  sales: [Sale!]
+}
+
+type GetTokensResponse {
+  tokens: [Token!]
+  paginationInfo: PaginationInfo!
+}
+
+input GetTokensInput {
+  slug: String
+  owner: String
+}
+
+type Query {
+  getTokens(where: GetTokensInput!, page: Int, limit: Int): GetTokensResponse
+}

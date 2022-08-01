@@ -1,5 +1,6 @@
 import express from 'express'
 import request from 'request'
+
 const router = express.Router()
 
 router.use('/', (req, res) => {
@@ -27,16 +28,18 @@ router.use('/', (req, res) => {
     request(
       {
         body: req.body,
-        url: url,
+        url,
         method: req.method,
         json: req.body,
         headers: { Authorization: req.header('Authorization') },
       },
-      function (error) {
+      (error) => {
         if (error) {
-          console.error('cors error: ' + error)
+          console.error(`cors error: ${error}`)
         }
       },
     ).pipe(res)
   }
 })
+
+export default router

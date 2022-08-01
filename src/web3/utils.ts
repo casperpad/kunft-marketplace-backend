@@ -1,6 +1,7 @@
-import { CasperClient, CLPublicKey, Keys } from 'casper-js-sdk'
-import _ from 'lodash'
+/* eslint-disable no-await-in-loop */
 import * as fs from 'fs'
+import { CasperClient, CLPublicKey, Keys } from 'casper-js-sdk'
+import find from 'lodash/find'
 
 export const parseTokenMeta = (str: string): Array<[string, string]> =>
   str.split(',').map((s) => {
@@ -13,6 +14,7 @@ export const getBinary = (pathToBinary: string) => {
 }
 
 export const sleep = (ms: number) => {
+  // eslint-disable-next-line no-promise-executor-return
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
@@ -33,27 +35,27 @@ export const getKeyPairOfUserSet = (pathToUsers: string) => {
 export const getDeploy = async (NODE_URL: string, deployHash: string) => {
   const client = new CasperClient(NODE_URL)
   let i = 300
-  while (i != 0) {
+  while (i !== 0) {
     const [deploy, raw] = await client.getDeploy(deployHash)
     if (raw.execution_results.length !== 0) {
       // @ts-ignore
       if (raw.execution_results[0].result.Success) {
         return deploy
-      } else {
-        // @ts-ignore
-        throw Error(
-          'Contract execution: ' +
-            // @ts-ignore
-            raw.execution_results[0].result.Failure.error_message,
-        )
       }
+      // @ts-ignore
+      throw Error(
+        `Contract execution: ${
+          // @ts-ignore
+          raw.execution_results[0].result.Failure.error_message
+        }`,
+      )
     } else {
       i--
+      // eslint-disable-next-line no-await-in-loop
       await sleep(1000)
-      continue
     }
   }
-  throw Error('Timeout after ' + i + "s. Something's wrong")
+  throw Error(`Timeout after ${i}s. Something's wrong`)
 }
 
 interface AccountInfo {
@@ -72,6 +74,7 @@ export const getAccountInfo = async (
     [],
   )
 
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   return accountInfo!
 }
 
@@ -91,7 +94,7 @@ export const getAccountNamedKeyValue = async (
   const accountInfo = await getAccountInfo(client, publicKey)
   // console.log("accountInfo:", accountInfo);
   // Get value of contract v1 named key.
-  const { key: contractHash } = _.find(accountInfo.namedKeys, (i) => {
+  const { key: contractHash } = find(accountInfo.namedKeys, (i) => {
     return i.name === namedKey
   })
 

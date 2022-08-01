@@ -1,3 +1,5 @@
+import { BigNumberish } from '@ethersproject/bignumber'
+import { types } from 'casper-js-client-helper'
 import {
   CLValue,
   CLPublicKey,
@@ -12,10 +14,10 @@ import {
   CLTypeTag,
   CLStringType,
   CLKeyType,
+  CLU256Type,
+  encodeBase16,
 } from 'casper-js-sdk'
-import { BigNumberish } from '@ethersproject/bignumber'
 import { Some, None } from 'ts-results'
-import { types } from 'casper-js-client-helper'
 
 const { Contract } = Contracts
 type RecipientType = types.RecipientType
@@ -47,6 +49,7 @@ export const MarketplaceEventParser = (
 
     const cep47Events = transforms.reduce((acc: any, val: any) => {
       if (
+        // eslint-disable-next-line no-prototype-builtins
         val.transform.hasOwnProperty('WriteCLValue') &&
         typeof val.transform.WriteCLValue.parsed === 'object' &&
         val.transform.WriteCLValue.parsed !== null
@@ -88,6 +91,7 @@ export const MarketplaceEventParser = (
 
 export class MarketplaceClient {
   casperClient: CasperClient
+
   contractClient: Contracts.Contract
 
   constructor(public _nodeAddress: string, public networkName: string) {
@@ -136,17 +140,23 @@ export class MarketplaceClient {
   public createSellOrder(
     startTime: number,
     collection: string,
-    tokenId: BigNumberish,
-    price: BigNumberish,
+    tokens: Map<BigNumberish, BigNumberish>,
     key: Keys.AsymmetricKey,
     paymentAmount: string,
     payToken?: string,
   ) {
+    const tokensMap = new CLMap([new CLU256Type(), new CLU256Type()])
+    Array.from(tokens.entries()).forEach((token) => {
+      tokensMap.set(
+        CLValueBuilder.u256(token[0]),
+        CLValueBuilder.u256(token[1]),
+      )
+    })
+
     const runtimeArgs = RuntimeArgs.fromMap({
       start_time: CLValueBuilder.u64(startTime),
       collection: CLValueBuilder.string(collection),
-      token_id: CLValueBuilder.u256(tokenId),
-      price: CLValueBuilder.u256(price),
+      tokens: tokensMap,
       pay_token: payToken
         ? CLValueBuilder.option(Some(CLValueBuilder.string(payToken)))
         : CLValueBuilder.option(None, new CLStringType()),
@@ -161,15 +171,18 @@ export class MarketplaceClient {
       [key],
     )
   }
+
   public cancelSellOrder(
     collection: string,
-    tokenId: BigNumberish,
+    tokenIds: BigNumberish[],
     key: Keys.AsymmetricKey,
     paymentAmount: string,
   ) {
     const runtimeArgs = RuntimeArgs.fromMap({
       collection: CLValueBuilder.string(collection),
-      token_id: CLValueBuilder.u256(tokenId),
+      token_ids: CLValueBuilder.list(
+        tokenIds.map((tokenId) => CLValueBuilder.u256(tokenId)),
+      ),
     })
     return this.contractClient.callEntrypoint(
       'cancel_sell_order',
@@ -207,10 +220,18 @@ export class MarketplaceClient {
     )
   }
 
+  public async feeWallet() {
+    const result = (await this.contractClient.queryContractData([
+      'fee_wallet',
+    ])) as CLValue
+    return encodeBase16(result.value())
+  }
+
   public createBuyOrder(
     collection: string,
     tokenId: BigNumberish,
     amount: BigNumberish,
+    payToken: string,
     key: Keys.AsymmetricKey,
     paymentAmount: string,
     additionalReccipient?: CLKeyParameters,

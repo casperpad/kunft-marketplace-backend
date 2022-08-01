@@ -1,71 +1,93 @@
-import express from 'express'
-import dotenv from 'dotenv'
-import cors from 'cors'
-import rateLimit from 'express-rate-limit'
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
-import compression from 'compression'
-import morgan from 'morgan'
-import appRouter from 'routes/index.routes'
+
+import { ApolloServer } from 'apollo-server-express'
+import cookieParser from 'cookie-parser'
+import cors from 'cors'
+import express from 'express'
+
 import mongoose from 'mongoose'
+import morgan from 'morgan'
+
 import responseTime from 'response-time'
 
-import redisClient from '@providers/redis'
-import { MONGODB_URL, PORT, SENTRY_DSN } from 'config'
+import { MONGODB_URL, PORT, SENTRY_DSN, APP_ENV } from '@/config'
+import config from '@/graphql'
+import redisClient from '@/providers/redis'
+import apiRouter from '@/routes'
+import { authLimiter } from './middlewares'
+import {
+  startMarketplaceEventStream,
+  // startCEP47EventStream,
+} from './web3/event'
 
-dotenv.config()
-
-const app = express()
-
-// Global rate limiter
-const limiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 1000, // limit each IP to 1000 requests per minute
-})
-
-if (SENTRY_DSN)
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    integrations: [
-      // enable HTTP calls tracing
-      new Sentry.Integrations.Http({ tracing: true }),
-      // enable Express.js middleware tracing
-      new Tracing.Integrations.Express({ app }),
-    ],
-
-    // Set tracesSampleRate to 1.0 to capture 100%
-    // of transactions for performance monitoring.
-    // We recommend adjusting this value in production
-    tracesSampleRate: 1.0,
-  })
-
-// RequestHandler creates a separate execution context using domains, so that every
-// transaction/span/breadcrumb is attached to its own Hub instance
-app.use(Sentry.Handlers.requestHandler())
-// TracingHandler creates a trace for every incoming request
-app.use(Sentry.Handlers.tracingHandler())
-
-app.use(compression())
-app.use(cors({ origin: '*' }))
-app.use(express.json({ limit: '25mb' }))
-app.use(express.urlencoded({ limit: '25mb', extended: true }))
-app.use(morgan('dev'))
-app.use(limiter)
-app.use(responseTime())
-
-app.use(appRouter)
-
-app.use(Sentry.Handlers.errorHandler())
+const dev = APP_ENV === 'development'
 
 async function startServer() {
   await mongoose.connect(MONGODB_URL).then(() => {
-    console.log(`Connected to MongoDB`)
+    console.info(`Connected to ${MONGODB_URL}`)
   })
 
-  await redisClient.connect()
+  // await redisClient.connect()
 
-  app.listen(PORT, () => {
-    console.log(`Server is running on ${PORT}`)
+  const server = express()
+
+  if (SENTRY_DSN)
+    Sentry.init({
+      dsn: SENTRY_DSN,
+      integrations: [
+        // enable HTTP calls tracing
+        new Sentry.Integrations.Http({ tracing: true }),
+        // enable Express.js middleware tracing
+        new Tracing.Integrations.Express({ app: server }),
+      ],
+
+      // Set tracesSampleRate to 1.0 to capture 100%
+      // of transactions for performance monitoring.
+      // We recommend adjusting this value in production
+      tracesSampleRate: 1.0,
+    })
+
+  // RequestHandler creates a separate execution context using domains, so that every
+  // transaction/span/breadcrumb is attached to its own Hub instance
+  server.use(Sentry.Handlers.requestHandler())
+  // TracingHandler creates a trace for every incoming request
+  server.use(Sentry.Handlers.tracingHandler())
+
+  // server.use(compression())
+  server.use(cors())
+  server.use(express.json({ limit: '25mb' }))
+  server.use(express.urlencoded({ limit: '25mb', extended: true }))
+  server.use(cookieParser())
+  server.use(morgan('dev'))
+
+  server.use(responseTime())
+
+  const apolloServer = new ApolloServer(config)
+  await apolloServer.start()
+  apolloServer.applyMiddleware({
+    app: server,
+    path: '/api/graphql',
+  })
+
+  // limit repeated failed requests to auth endpoints
+  if (APP_ENV !== 'development') {
+    server.use('/api/v1/auth', authLimiter)
+  }
+  server.use('/api', apiRouter)
+
+  server.use(Sentry.Handlers.errorHandler())
+
+  server.listen(PORT, () => {
+    try {
+      startMarketplaceEventStream()
+    } catch (err: any) {
+      console.error(`***Marketplace EventStream Error***`)
+      console.error(err)
+      console.error(`*** ***`)
+    }
+    // startCEP47EventStream()
+    console.info(`Server is running on ${PORT}`)
   })
 }
 
