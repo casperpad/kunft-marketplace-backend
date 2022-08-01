@@ -1,11 +1,7 @@
 import mongoose, { Schema } from 'mongoose'
-import {
-  OfferDocument,
-  OfferModel,
-  OfferSchema,
-} from '../interfaces/mongoose.gen'
+import { OfferDocument, OfferModel } from '../interfaces/mongoose.gen'
 
-const OfferSchema: OfferSchema = new Schema(
+const OfferSchema = new Schema(
   {
     creator: {
       type: String,
@@ -43,7 +39,4 @@ const OfferSchema: OfferSchema = new Schema(
   { timestamps: true },
 )
 
-export const Offer = mongoose.model<OfferDocument, OfferModel>(
-  'Offer',
-  OfferSchema,
-)
+export const Offer = mongoose.model('Offer', OfferSchema)

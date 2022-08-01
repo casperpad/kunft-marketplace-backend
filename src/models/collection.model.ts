@@ -36,9 +36,7 @@ const CollectionSchema = new Schema({
   website: { type: String },
 })
 
+// @ts-ignore
 CollectionSchema.plugin(mongooseAggregatePaginate)
 
-export const Collection = mongoose.model<
-  CollectionDocument,
-  mongoose.AggregatePaginateModel<CollectionDocument>
->('Collection', CollectionSchema)
+export const Collection = mongoose.model('Collection', CollectionSchema)

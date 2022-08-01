@@ -12,7 +12,7 @@ const verifyCallback =
         new ApiError(StatusCodes.UNAUTHORIZED, 'Please authenticate'),
       )
     }
-    req.user = user
+    req.headers.user = user
 
     if (requiredRights.length) {
       const userRights = roleRights.get(user.role)

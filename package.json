@@ -2,7 +2,7 @@
   "name": "kunft-marketplace-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -15,10 +15,8 @@
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json}\"",
     "format:check:staged": "lint-staged",
     "format:write": "prettier --write \"**/*.{js,jsx,ts,tsx,json}\"",
-    "generate:queries": "graphql-codegen --config codegen.config.yml",
-    "generate:types": "mtgen ./server/models -p tsconfig.server.json -o ./server/interfaces",
-    "lint": "eslint \"./src\"",
-    "postinstall": "pnpm run queries:generate"
+    "generate:types": "mtgen ./src/models -o ./src/interfaces",
+    "lint": "eslint \"./src\""
   },
   "dependencies": {
     "@apollo/client": "^3.6.9",
@@ -62,9 +60,12 @@
     "joi": "^17.6.0",
     "jsonwebtoken": "^8.5.1",
     "mongodb-memory-server": "^8.7.2",
-    "mongoose": "6.3.1",
+    "mongoose": "6.5.0",
     "mongoose-aggregate-paginate-v2": "^1.0.6",
+    "mongoose-tsgen": "^9.0.7",
     "morgan": "^1.10.0",
+    "openapi-types": "^12.0.0",
+    "passport": "^0.6.0",
     "redis": "^4.1.1",
     "redis-mock": "^0.56.3",
     "request": "^2.88.2",
@@ -86,6 +87,7 @@
     "@types/graphql-date": "^1.0.5",
     "@types/jsonwebtoken": "^8.5.8",
     "@types/mongoose-aggregate-paginate-v2": "^1.0.5",
+    "@types/passport": "^1.0.9",
     "@types/swagger-jsdoc": "^6.0.1",
     "@types/swagger-ui-express": "^4.1.3",
     "@types/validator": "^13.7.4",
@@ -101,9 +103,6 @@
     "lint-staged": "^13.0.3",
     "prettier": "^2.7.1",
     "ts-node-dev": "^2.0.0"
-  },
-  "_moduleAliases": {
-    "@providers": "dist/providers"
   },
   "engines": {
     "node": "16.13.1"

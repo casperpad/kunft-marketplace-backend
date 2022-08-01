@@ -1,6 +1,16 @@
-import mongoose, { Schema } from 'mongoose'
+import mongoose, { Schema, HydratedDocument, Model } from 'mongoose'
 import validator from 'validator'
-import { UserDocument, UserModel } from '../interfaces/mongoose.gen'
+
+interface User {
+  nonce: string
+  publicKey: string
+  emailVerified: boolean
+  verified: boolean
+  role: 'user' | 'admin'
+  firstName?: string | undefined
+  lastName?: string | undefined
+  email?: string | undefined
+}
 
 // UserSchema type
 const UserSchema = new Schema({
@@ -44,20 +54,22 @@ const UserSchema = new Schema({
   },
 })
 
-// NOTE: `this: UserDocument` is required for virtual properties to tell TS the type of `this` value using the "fake this" feature
-// you will need to add these in after your first ever run of the CLI
-UserSchema.virtual('name').get(function (this: UserDocument) {
-  return `${this.firstName} ${this.lastName}`
-})
-
 UserSchema.statics = {
   async getNonce(publicKey: string): Promise<string | undefined> {
     const user = await this.findOne({ publicKey }).select('nonce')
     return user?.nonce
   },
-  async findByPublicKey(publicKey: string): Promise<UserDocument | null> {
+  async findByPublicKey(
+    publicKey: string,
+  ): Promise<HydratedDocument<User> | null> {
     return await this.findOne({ publicKey })
   },
 }
 
-export const User = mongoose.model<UserDocument, UserModel>('User', UserSchema)
+// NOTE: `this: UserDocument` is required for virtual properties to tell TS the type of `this` value using the "fake this" feature
+// you will need to add these in after your first ever run of the CLI
+UserSchema.virtual('name').get(function (this: HydratedDocument<User>) {
+  return `${this.firstName} ${this.lastName}`
+})
+
+export const User = mongoose.model('User', UserSchema)

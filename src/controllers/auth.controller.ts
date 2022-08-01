@@ -23,6 +23,7 @@ export const checkAuth = catchAsync(
   async (req: express.Request, res: express.Response) => {
     try {
       const { publicKey } = req.params
+      // @ts-ignore
       const nonce = await User.getNonce(publicKey)
       if (nonce === undefined) throw Error(`Not exist user ${publicKey}`)
 
@@ -41,6 +42,7 @@ export const checkAuth = catchAsync(
 export const getNonce = catchAsync(
   async (req: express.Request, res: express.Response) => {
     const { publicKey } = req.params
+    // @ts-ignore
     const nonce = await User.getNonce(publicKey)
     if (nonce === undefined) throw Error(`Not exist user ${publicKey}`)
     res.json({ nonce })
@@ -51,6 +53,7 @@ export const signUp = catchAsync(
   async (req: express.Request, res: express.Response) => {
     const { publicKey: publicKeyString, signature: signatureString } = req.body
     const publicKey = CLPublicKey.fromHex(publicKeyString)
+    // @ts-ignore
     let user = await User.findByPublicKey(publicKey.toHex())
 
     if (user) {
@@ -83,9 +86,7 @@ export const signIn = catchAsync(
 
     const signature = decodeBase16(signatureString)
 
-    const user = await User.findOne({ publicKey: publicKeyString }).populate(
-      'tokens',
-    )
+    const user = await User.findOne({ publicKey: publicKeyString })
 
     if (user === null)
       throw new ApiError(

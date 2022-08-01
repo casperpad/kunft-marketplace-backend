@@ -31,9 +31,7 @@ const TokenSchema = new Schema({
   },
 })
 
+// @ts-ignore
 TokenSchema.plugin(mongooseAggregatePaginate)
 
-export const Token = mongoose.model<
-  TokenDocument,
-  mongoose.AggregatePaginateModel<TokenDocument>
->('Token', TokenSchema)
+export const Token = mongoose.model('Token', TokenSchema)

@@ -1,4 +1,4 @@
-import { REDIS_URL } from 'config'
+import { REDIS_URL } from '@/config'
 import * as redis from 'redis'
 
 // create redis redisClient

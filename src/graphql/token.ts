@@ -6,7 +6,7 @@ import { getTokens } from '@/services/token'
 
 export const tokenResolver: IResolvers = {
   Query: {
-    async getTokens(_, args, __, ___) {
+    async getTokens(_: any, args: any, __: any, ___: any) {
       const { where, page, limit } = args
       return await getTokens({ where, page, limit })
     },

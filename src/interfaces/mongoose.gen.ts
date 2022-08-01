@@ -19,6 +19,7 @@ export type Collection = {
   contractPackageHash: string
   contractHash: string
   slug: string
+  deployer?: string
   symbol: string
   name: string
   description?: string
@@ -114,6 +115,7 @@ export type CollectionDocument = mongoose.Document<
     contractPackageHash: string
     contractHash: string
     slug: string
+    deployer?: string
     symbol: string
     name: string
     description?: string
@@ -357,6 +359,7 @@ export type Token = {
   >
   favoritedUsers: (User['_id'] | User)[]
   viewed?: number
+  owner?: string
   _id: mongoose.Types.ObjectId
 }
 
@@ -441,6 +444,7 @@ export type TokenDocument = mongoose.Document<
     }>
     favoritedUsers: mongoose.Types.Array<UserDocument['_id'] | UserDocument>
     viewed?: number
+    owner?: string
     _id: mongoose.Types.ObjectId
   }
 
@@ -459,8 +463,8 @@ export type User = {
   publicKey: string
   email?: string
   emailVerified?: boolean
+  verified: boolean
   role?: 'user' | 'admin'
-  tokens: (Token['_id'] | Token)[]
   _id: mongoose.Types.ObjectId
 }
 
@@ -546,8 +550,8 @@ export type UserDocument = mongoose.Document<
     publicKey: string
     email?: string
     emailVerified?: boolean
+    verified: boolean
     role?: 'user' | 'admin'
-    tokens: mongoose.Types.Array<TokenDocument['_id'] | TokenDocument>
     _id: mongoose.Types.ObjectId
     name: string
   }
