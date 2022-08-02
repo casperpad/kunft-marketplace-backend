@@ -13,7 +13,7 @@ type Sale {
 }
 
 type Token {
-  collectionNFT: Collection!
+  collection: Collection!
   tokenId: String!
   metadata: Metadata!
   favoritedUsers: [String!]
@@ -31,8 +31,21 @@ type GetTokensResponse {
 input GetTokensInput {
   slug: String
   owner: String
+  tokenId: String
 }
 
 type Query {
   getTokens(where: GetTokensInput!, page: Int, limit: Int): GetTokensResponse
+}
+
+type AddTokenResponse {
+  result: Boolean
+}
+
+type Mutation {
+  addToken(
+    contractPackageHash: String!
+    contractHash: String!
+    tokenId: String!
+  ): AddTokenResponse
 }

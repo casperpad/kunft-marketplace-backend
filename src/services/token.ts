@@ -1,9 +1,7 @@
 import { CEP47Client } from 'casper-cep47-js-client'
-import { CLPublicKey } from 'casper-js-sdk'
-import { StatusCodes } from 'http-status-codes'
 
-import { Token, Collection, User } from '@/models'
-import { ApiError } from '@/utils'
+import { Token, Collection } from '@/models'
+
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
@@ -13,6 +11,7 @@ import { addCollection } from './collection'
 interface GetTokensInput {
   slug?: string
   owner?: string
+  tokenId?: string
 }
 
 export const getTokens = async ({
@@ -24,8 +23,8 @@ export const getTokens = async ({
   page?: number
   limit?: number
 }) => {
-  const { slug, owner } = where
-  let collectionNFTId: string | undefined
+  const { slug, owner, tokenId } = where
+  // let collectionNFTId: string | undefined
   const matchQuery = {} as any
   if (slug) {
     const collectionDB = await Collection.findOne({ slug })
@@ -34,12 +33,42 @@ export const getTokens = async ({
 
     matchQuery.collectionNFT = collectionDB._id
   }
-
+  if (owner) {
+    matchQuery.owner = owner
+  }
+  if (tokenId) {
+    matchQuery.tokenId = tokenId
+  }
+  console.log({
+    $match: {
+      ...matchQuery,
+    },
+  })
   const aggregate = Token.aggregate([
     {
       $match: {
         ...matchQuery,
-        owner,
+      },
+    },
+    {
+      $lookup: {
+        from: 'collections',
+        localField: 'collectionNFT',
+        foreignField: '_id',
+        as: 'collection',
+        pipeline: [
+          {
+            $project: {
+              _id: 0,
+              __v: 0,
+            },
+          },
+        ],
+      },
+    },
+    {
+      $set: {
+        collection: { $first: '$collection' },
       },
     },
     {

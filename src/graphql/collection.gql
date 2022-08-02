@@ -31,10 +31,11 @@ type GetCollectionsResponse {
 
 type Slug {
   slug: String!
+  contractHash: String!
 }
 
 type GetCollectionSlugsResponse {
-  slugs: [Slug!]
+  data: [Slug!]
 }
 
 type Query {

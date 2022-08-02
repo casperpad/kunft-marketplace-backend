@@ -8,8 +8,9 @@ export const collectionResolver: IResolvers = {
       return await getCollections(query, page, limit)
     },
     async getCollectionSlugs(_: any, __: any, ___: any, ____: any) {
-      const slugs = await getCollectionSlugs()
-      return { slugs }
+      const data = await getCollectionSlugs()
+      console.log(data)
+      return { data }
     },
   },
   Mutation: {

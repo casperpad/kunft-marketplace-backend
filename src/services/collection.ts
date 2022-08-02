@@ -94,7 +94,7 @@ export const getCollections = async (
 }
 
 export const getCollectionSlugs = async () => {
-  const result = await Collection.find().select('slug -_id')
+  const result = await Collection.find().select('slug contractHash -_id')
   return result
 }
 
