@@ -18,10 +18,9 @@ type Token {
   metadata: Metadata!
   favoritedUsers: [String!]
   viewed: Int!
-  price: String
   owner: String!
-  listed: Boolean!
   sales: [Sale!]
+  pendingSale: Sale
 }
 
 type GetTokensResponse {
@@ -39,14 +38,15 @@ type Query {
   getTokens(where: GetTokensInput!, page: Int, limit: Int): GetTokensResponse
 }
 
-type AddTokenResponse {
-  result: Boolean
+type TokenResponse {
+  token: Token!
 }
 
 type Mutation {
-  addToken(
-    contractPackageHash: String!
-    contractHash: String!
+  addToken(contractHash: String!, tokenId: String!): TokenResponse
+  favoriteToken(
+    slug: String!
     tokenId: String!
-  ): AddTokenResponse
+    publicKey: String!
+  ): TokenResponse
 }

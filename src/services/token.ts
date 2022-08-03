@@ -1,6 +1,6 @@
 import { CEP47Client } from 'casper-cep47-js-client'
 import { StatusCodes } from 'http-status-codes'
-import { Token, Collection } from '@/models'
+import { Token, Collection, User } from '@/models'
 
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
@@ -41,11 +41,7 @@ export const getTokens = async ({
   if (tokenId) {
     matchQuery.tokenId = tokenId
   }
-  console.log({
-    $match: {
-      ...matchQuery,
-    },
-  })
+
   const aggregate = Token.aggregate([
     {
       $match: {
@@ -92,23 +88,25 @@ export const getTokens = async ({
     },
     {
       $set: {
-        price: '1000000',
-      },
-    },
-    {
-      $addFields: {
-        listed: {
-          $eq: [
-            {
-              $let: {
-                vars: {
-                  sales: '$sales',
+        pendingSale: {
+          $let: {
+            vars: {
+              pendingSales: {
+                $filter: {
+                  input: '$sales',
+                  as: 'sale',
+                  cond: { $eq: ['$$sale.status', 'pending'] },
                 },
-                in: '$$sales.status',
               },
             },
-            'pending',
-          ],
+            in: {
+              $cond: {
+                if: { $eq: [{ $size: '$$pendingSales' }, 0] },
+                then: null,
+                else: { $arrayElemAt: ['$$pendingSales', 0] },
+              },
+            },
+          },
         },
       },
     },
@@ -188,7 +186,38 @@ export const addToken = async (contractHash: string, tokenId: string) => {
     },
   )
 
-  console.log(token)
+  return token
+}
 
+export const favoriteToken = async ({
+  slug,
+  tokenId,
+  publicKey,
+}: {
+  slug: string
+  tokenId: string
+  publicKey: string
+}) => {
+  console.log(`first`)
+  const collectionNFT = await Collection.findOne({ slug })
+
+  if (collectionNFT === null) throw Error(`Not exist ${slug}`)
+
+  let token = await Token.findOne({ collectionNFT, tokenId })
+
+  const user = await User.findOne({ publicKey })
+
+  console.log(token.favoritedUsers)
+  if (
+    token.favoritedUsers.find((u: any) => u.toString() === user._id.toString())
+  )
+    token.favoritedUsers = token.favoritedUsers.filter(
+      (u: any) => u.toString() !== user._id.toString(),
+    )
+  else token.favoritedUsers.push(user._id)
+
+  await token.save()
+
+  token = ((await getTokens({ where: { slug, tokenId } })) as any).tokens[0]
   return token
 }
