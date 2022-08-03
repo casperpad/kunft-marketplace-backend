@@ -14,8 +14,9 @@ export const tokenResolver: IResolvers = {
   },
   Mutation: {
     async addToken(_: any, args: any) {
-      const { contractPackageHash, contractHash, tokenId } = args
-      return await addToken(contractPackageHash, contractHash, tokenId)
+      const { contractHash, tokenId } = args
+      await addToken(contractHash, tokenId)
+      return { result: true }
     },
   },
   GraphQLDate,

@@ -13,15 +13,13 @@ import responseTime from 'response-time'
 
 import { MONGODB_URL, PORT, SENTRY_DSN, APP_ENV } from '@/config'
 import config from '@/graphql'
-import redisClient from '@/providers/redis'
+// import redisClient from '@/providers/redis'
 import apiRouter from '@/routes'
 import { authLimiter } from './middlewares'
 import {
   startMarketplaceEventStream,
   // startCEP47EventStream,
 } from './web3/event'
-
-const dev = APP_ENV === 'development'
 
 async function startServer() {
   await mongoose.connect(MONGODB_URL).then(() => {
@@ -67,14 +65,14 @@ async function startServer() {
   await apolloServer.start()
   apolloServer.applyMiddleware({
     app: server,
-    path: '/api/graphql',
+    path: '/graphql',
   })
 
   // limit repeated failed requests to auth endpoints
   if (APP_ENV !== 'development') {
-    server.use('/api/v1/auth', authLimiter)
+    server.use('/v1/auth', authLimiter)
   }
-  server.use('/api', apiRouter)
+  server.use(apiRouter)
 
   server.use(Sentry.Handlers.errorHandler())
 

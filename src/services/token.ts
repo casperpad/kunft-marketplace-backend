@@ -1,5 +1,5 @@
 import { CEP47Client } from 'casper-cep47-js-client'
-
+import { StatusCodes } from 'http-status-codes'
 import { Token, Collection } from '@/models'
 
 import {
@@ -7,6 +7,8 @@ import {
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
 } from '../config'
 import { addCollection } from './collection'
+import { CasperClient } from 'casper-js-sdk'
+import { ApiError } from '@/utils'
 
 interface GetTokensInput {
   slug?: string
@@ -93,32 +95,28 @@ export const getTokens = async ({
         price: '1000000',
       },
     },
-    // {
-    //   $addFields: {
-    //     result: {
-    //       $eq: [
-    //         {
-    //           $let: {
-    //             vars: {
-    //               sales: '$sales',
-    //             },
-    //             in: '$$sales.status',
-    //           },
-    //         },
-    //         'pending',
-    //       ],
-    //     },
-    //   },
-    // },
     {
-      $set: {
-        listed: true,
+      $addFields: {
+        listed: {
+          $eq: [
+            {
+              $let: {
+                vars: {
+                  sales: '$sales',
+                },
+                in: '$$sales.status',
+              },
+            },
+            'pending',
+          ],
+        },
       },
     },
     {
       $project: {
         _id: 0,
         __v: 0,
+        collectionNFT: 0,
       },
     },
   ])
@@ -147,11 +145,19 @@ export const getTokens = async ({
   return result
 }
 
-export const addToken = async (
-  contractPackageHash: string,
-  contractHash: string,
-  tokenId: string,
-) => {
+export const addToken = async (contractHash: string, tokenId: string) => {
+  const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
+  const stateRootHash = await casperClient.nodeClient.getStateRootHash()
+  const { Contract } = await casperClient.nodeClient.getBlockState(
+    stateRootHash,
+    `hash-${contractHash!}`,
+    [],
+  )
+  const contractPackageHash = Contract?.contractPackageHash.slice(21)
+
+  if (!contractPackageHash)
+    throw new ApiError(StatusCodes.NOT_FOUND, `Not found contractPackageHash`)
+
   let collectionNFT = await Collection.findOne({ contractPackageHash })
   if (collectionNFT === null) {
     collectionNFT = await addCollection(
@@ -181,6 +187,8 @@ export const addToken = async (
       upsert: true,
     },
   )
+
+  console.log(token)
 
   return token
 }

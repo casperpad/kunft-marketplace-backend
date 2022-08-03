@@ -19,6 +19,7 @@ type Token {
   favoritedUsers: [String!]
   viewed: Int!
   price: String
+  owner: String!
   listed: Boolean!
   sales: [Sale!]
 }
