@@ -1,14 +1,15 @@
+import axios from 'axios'
+import { CasperClient } from 'casper-js-sdk'
 import { CEP47Client } from 'casper-cep47-js-client'
 import { StatusCodes } from 'http-status-codes'
+import { ApiError } from '@/utils'
 import { Token, Collection, User } from '@/models'
-
+import { MakeServices } from '@/types'
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
 } from '../config'
 import { addCollection } from './collection'
-import { CasperClient } from 'casper-js-sdk'
-import { ApiError } from '@/utils'
 
 interface GetTokensInput {
   slug?: string
@@ -37,6 +38,17 @@ export const getTokens = async ({
   }
   if (owner) {
     matchQuery.owner = owner
+
+    // let page = 1
+    // const limit = 10
+    // do {
+    //   const { data } = await axios.get<MakeServices.TokensByOwnerResponse>(
+    //     `https://event-store-api-clarity-testnet.make.services/accounts/2642243a3ca1abc6f1b5ad3c9f53114955533ffe1a9e76055d1f987370d1d8e0/nft-tokens?fields=contract_package&page=${page}&limit=${limit}`,
+    //   )
+    //   if (data.pageCount === page) break
+    //   page += 1
+    // } while (true)
+    //
   }
   if (tokenId) {
     matchQuery.tokenId = tokenId
@@ -173,7 +185,7 @@ export const addToken = async (contractHash: string, tokenId: string) => {
   cep47Client.setContractHash(`hash-${contractHash}`)
   const metadata = await cep47Client.getTokenMeta(tokenId)
   const owner = (await cep47Client.getOwnerOf(tokenId)).slice(13)
-  const token = await Token.findOneAndUpdate(
+  await Token.findOneAndUpdate(
     { collectionNFT, tokenId },
     {
       collectionNFT,
@@ -183,9 +195,12 @@ export const addToken = async (contractHash: string, tokenId: string) => {
     },
     {
       upsert: true,
+      new: true,
     },
   )
-
+  const token = (
+    (await getTokens({ where: { slug: collectionNFT.slug, tokenId } })) as any
+  ).tokens[0]
   return token
 }
 
@@ -198,7 +213,6 @@ export const favoriteToken = async ({
   tokenId: string
   publicKey: string
 }) => {
-  console.log(`first`)
   const collectionNFT = await Collection.findOne({ slug })
 
   if (collectionNFT === null) throw Error(`Not exist ${slug}`)
@@ -207,7 +221,6 @@ export const favoriteToken = async ({
 
   const user = await User.findOne({ publicKey })
 
-  console.log(token.favoritedUsers)
   if (
     token.favoritedUsers.find((u: any) => u.toString() === user._id.toString())
   )

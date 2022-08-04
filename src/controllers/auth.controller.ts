@@ -105,7 +105,9 @@ export const signIn = catchAsync(
 
     await user.save()
 
-    const { nonce: _n, ...signObject } = user.toJSON()
+    const { nonce: _n, __v, _id, ...signObject } = user.toJSON()
+
+    signObject.id = _id
 
     const token = signJwt(signObject, JWT_SECRET, {
       expiresIn: JWT_EXPIRE,

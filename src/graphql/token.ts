@@ -15,8 +15,8 @@ export const tokenResolver: IResolvers = {
   Mutation: {
     async addToken(_: any, args: any) {
       const { contractHash, tokenId } = args
-      await addToken(contractHash, tokenId)
-      return { result: true }
+      const token = await addToken(contractHash, tokenId)
+      return { token }
     },
     async favoriteToken(_: any, args: any, context: any) {
       // const { slug, tokenId ,publicKey} = args

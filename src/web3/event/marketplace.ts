@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import retry from 'async-retry'
 import { CEP47Client } from 'casper-cep47-js-client'
 import {
   CLMap,
@@ -24,7 +25,7 @@ import { MarketplaceEventParser, MarketplaceEvents } from '../marketplace'
 
 // const KEYS = Keys.Ed25519.parseKeyPair(publicKey, privateKey)
 
-export const startMarketplaceEventStream = async () => {
+export const _startMarketplaceEventStream = async () => {
   console.info(`Starting Marketplace event listener`)
   const es = new EventStream(NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS!)
   const contractPackageHash = NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH!
@@ -113,7 +114,7 @@ export const startMarketplaceEventStream = async () => {
           }
           let formatedCreatorHash = creator!.value()
           formatedCreatorHash = formatedCreatorHash.slice(20).slice(0, -2)
-          formatedCreatorHash = `account-hash-${formatedCreatorHash}`
+          // formatedCreatorHash = `account-hash-${formatedCreatorHash}`
           switch (eventName) {
             case MarketplaceEvents.SellOrderCreated: {
               const order = await Sale.findOne({
@@ -152,9 +153,9 @@ export const startMarketplaceEventStream = async () => {
                   startTime: startTime!.value(),
                 },
                 {
-                  buyer: buyer!.value(),
-                  additionalRecipient: additionalRecipient!.value(),
-                  status: 'succed',
+                  buyer: buyer!.value().slice(20).slice(0, -2),
+                  additionalRecipient: additionalRecipient?.value(),
+                  status: 'succeed',
                 },
               )
               break
@@ -213,4 +214,15 @@ export const startMarketplaceEventStream = async () => {
     }
   })
   es.start(0)
+}
+
+export const startMarketplaceEventStream = async () => {
+  //
+  await retry(_startMarketplaceEventStream, {
+    retries: 10,
+    minTimeout: 200000,
+    onRetry(e, attempt) {
+      console.log(e, attempt)
+    },
+  })
 }
