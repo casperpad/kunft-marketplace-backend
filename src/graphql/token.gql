@@ -12,6 +12,18 @@ type Sale {
   updatedAt: GraphQLDate!
 }
 
+type Offer {
+  creator: String!
+  payToken: String
+  price: String!
+  startTime: GraphQLLong!
+  owner: String
+  additionalRecipient: String
+  status: String!
+  createdAt: GraphQLDate!
+  updatedAt: GraphQLDate!
+}
+
 type Token {
   collection: Collection!
   tokenId: String!
@@ -19,7 +31,8 @@ type Token {
   favoritedUsers: [String!]
   viewed: Int!
   owner: String!
-  sales: [Sale!]
+  sales: [Sale!]!
+  offers: [Offer!]!
   pendingSale: Sale
 }
 
@@ -32,6 +45,7 @@ input GetTokensInput {
   slug: String
   owner: String
   tokenId: String
+  promoted: Boolean
 }
 
 type Query {

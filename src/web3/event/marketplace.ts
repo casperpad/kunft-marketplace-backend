@@ -17,6 +17,7 @@ import {
 } from '../../config'
 import { Sale } from '../../models/sale.model'
 import { MarketplaceEventParser, MarketplaceEvents } from '../marketplace'
+import { Casper } from '@/models/casper.model'
 
 // const privateKey = Keys.Ed25519.parsePrivateKeyFile(
 //   `${MASTER_KEY_PAIR_PATH}/secret_key.pem`,
@@ -31,6 +32,7 @@ export const _startMarketplaceEventStream = async () => {
   const contractPackageHash = NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH!
 
   es.subscribe(EventName.DeployProcessed, async (events) => {
+    console.dir(events.id, { depth: null })
     const parsedEvents = MarketplaceEventParser(
       {
         contractPackageHash: contractPackageHash.slice(5),
@@ -90,11 +92,15 @@ export const _startMarketplaceEventStream = async () => {
             await collectionDB.save()
           }
           cep47Client.setContractHash(`hash-${collection!.value()}`)
-
-          let token = await Token.findOne({
-            collectionNFT: collectionDB,
-            tokenId: tokenId!.value(),
-          })
+          const token_owner = await cep47Client.getOwnerOf(tokenId!.value())
+          let token = await Token.findOneAndUpdate(
+            {
+              collectionNFT: collectionDB,
+              tokenId: tokenId!.value(),
+            },
+            { owner: token_owner.slice(13) },
+            { new: true },
+          )
           if (token === null) {
             console.info(`Adding ${collectionDB.name} #${tokenId!.value()}`)
             const tokenMeta: Map<string, string> =
@@ -108,6 +114,7 @@ export const _startMarketplaceEventStream = async () => {
             token = new Token({
               collectionNFT: collectionDB,
               tokenId: tokenId!.value(),
+              owner: token_owner.slice(13),
               metadata,
             })
             await token.save()
@@ -164,10 +171,15 @@ export const _startMarketplaceEventStream = async () => {
               const buyOrder = new Offer({
                 creator: formatedCreatorHash,
                 token,
-                payToken: payToken!.value(),
+                owner: token.owner,
+                payToken:
+                  payToken!.value() === 'None' ? undefined : payToken!.value(),
                 price: price!.value(),
                 startTime: startTime!.value(),
-                additionalRecipient: additionalRecipient!.value(),
+                additionalRecipient:
+                  additionalRecipient!.value() === 'None'
+                    ? undefined
+                    : additionalRecipient!.value(),
                 status: 'pending',
               })
               await buyOrder.save()
@@ -207,13 +219,19 @@ export const _startMarketplaceEventStream = async () => {
         await Promise.all(promises)
         console.info('***     ***')
       }
+      const consumed_event = new Casper({ lasteEventId: events.id })
+      await consumed_event.save()
     } catch (err: any) {
       console.error(`***Marketplace EventStream Error***`)
       console.error(err)
       console.error(`*** ***`)
     }
   })
-  es.start(0)
+  const consumedEvent = await Casper.find().sort({ createdAt: 'desc' }).limit(1)
+  if (consumedEvent.length === 1) {
+    console.info(`Start Event listener from ${consumedEvent[0].lasteEventId}`)
+    es.start(consumedEvent[0].lasteEventId)
+  } else es.start()
 }
 
 export const startMarketplaceEventStream = async () => {

@@ -1,11 +1,13 @@
 import mongoose, { Schema } from 'mongoose'
 import { OfferDocument, OfferModel } from '../interfaces/mongoose.gen'
+import { casperValidation } from '@/validations'
 
 const OfferSchema = new Schema(
   {
     creator: {
       type: String,
       required: true,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     token: {
       type: Schema.Types.ObjectId,
@@ -14,6 +16,7 @@ const OfferSchema = new Schema(
     },
     payToken: {
       type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     price: {
       type: String,
@@ -25,13 +28,15 @@ const OfferSchema = new Schema(
     },
     owner: {
       type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     additionalRecipient: {
       type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     status: {
       type: String,
-      enum: ['pending', 'suceed', 'canceled'],
+      enum: ['pending', 'succeed', 'canceled'],
       default: 'pending',
       required: true,
     },

@@ -2,6 +2,7 @@ import axios from 'axios'
 import { CasperClient } from 'casper-js-sdk'
 import { CEP47Client } from 'casper-cep47-js-client'
 import { StatusCodes } from 'http-status-codes'
+import random from 'lodash/random'
 import { ApiError } from '@/utils'
 import { Token, Collection, User } from '@/models'
 import { MakeServices } from '@/types'
@@ -15,6 +16,7 @@ interface GetTokensInput {
   slug?: string
   owner?: string
   tokenId?: string
+  promoted?: boolean
 }
 
 export const getTokens = async ({
@@ -26,7 +28,7 @@ export const getTokens = async ({
   page?: number
   limit?: number
 }) => {
-  const { slug, owner, tokenId } = where
+  const { slug, owner, promoted, tokenId } = where
   // let collectionNFTId: string | undefined
   const matchQuery = {} as any
   if (slug) {
@@ -36,6 +38,14 @@ export const getTokens = async ({
 
     matchQuery.collectionNFT = collectionDB._id
   }
+  if (promoted) {
+    const collectionDBs = await Collection.find({ promoted })
+    if (collectionDBs.length > 0) {
+      const index = random(0, collectionDBs.length)
+      matchQuery.collectionNFT = collectionDBs[index]._id
+    }
+  }
+
   if (owner) {
     matchQuery.owner = owner
 
@@ -98,6 +108,25 @@ export const getTokens = async ({
         ],
       },
     },
+    { $sort: { 'sales.createdAt': -1 } },
+    {
+      $lookup: {
+        from: 'offers',
+        localField: '_id',
+        foreignField: 'token',
+        as: 'offers',
+        pipeline: [
+          {
+            $project: {
+              _id: 0,
+              __v: 0,
+              token: 0,
+            },
+          },
+        ],
+      },
+    },
+    { $sort: { 'offers.createdAt': -1 } },
     {
       $set: {
         pendingSale: {
@@ -151,6 +180,8 @@ export const getTokens = async ({
   }
 
   const result = await Token.aggregatePaginate(aggregate, options)
+
+  console.log(result)
 
   return result
 }

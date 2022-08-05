@@ -10,7 +10,7 @@ const CasperSchema = new Schema(
       type: String,
     },
   },
-  { timestamps: true },
+  { timestamps: true, capped: { size: 1024, max: 1000, autoIndexId: true } },
 )
 
 export const Casper = mongoose.model('Casper', CasperSchema)
