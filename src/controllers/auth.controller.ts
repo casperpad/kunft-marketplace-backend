@@ -105,9 +105,7 @@ export const signIn = catchAsync(
 
     await user.save()
 
-    const { nonce: _n, __v, _id, ...signObject } = user.toJSON()
-
-    signObject.id = _id
+    const signObject = user.toJSON()
 
     const token = signJwt(signObject, JWT_SECRET, {
       expiresIn: JWT_EXPIRE,
@@ -142,12 +140,7 @@ export const updateInfo = catchAsync(
       { ...info },
       { new: true },
     )
-    const userObject = user.toJSON()
-    userObject.id = user._id
-    delete userObject.__v
-    delete userObject._id
-    delete userObject.nonce
-    console.log(userObject)
-    res.json(userObject)
+
+    res.json(user)
   },
 )

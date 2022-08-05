@@ -33,7 +33,6 @@ export const _startMarketplaceEventStream = async () => {
     const contractPackageHash = NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH!
 
     es.subscribe(EventName.DeployProcessed, async (events) => {
-      console.dir(events.id, { depth: null })
       const parsedEvents = MarketplaceEventParser(
         {
           contractPackageHash: contractPackageHash.slice(5),
@@ -157,7 +156,8 @@ export const _startMarketplaceEventStream = async () => {
                   { status: 'canceled' },
                 )
                 break
-              case MarketplaceEvents.SellOrderBought:
+              case MarketplaceEvents.SellOrderBought: {
+                const formattedbuyer = buyer!.value().slice(20).slice(0, -2)
                 await Sale.findOneAndUpdate(
                   {
                     creator: formatedCreatorHash,
@@ -165,12 +165,15 @@ export const _startMarketplaceEventStream = async () => {
                     startTime: startTime!.value(),
                   },
                   {
-                    buyer: buyer!.value().slice(20).slice(0, -2),
+                    buyer: formattedbuyer,
                     additionalRecipient: additionalRecipient?.value(),
                     status: 'succeed',
                   },
                 )
+                token.owner = formattedbuyer
+                await token.save()
                 break
+              }
 
               case MarketplaceEvents.BuyOrderCreated: {
                 const buyOrder = new Offer({
@@ -206,7 +209,7 @@ export const _startMarketplaceEventStream = async () => {
                 break
               }
               case MarketplaceEvents.BuyOrderAccepted: {
-                Offer.findOneAndUpdate(
+                await Offer.findOneAndUpdate(
                   {
                     creator: formatedCreatorHash,
                     token,
@@ -217,6 +220,8 @@ export const _startMarketplaceEventStream = async () => {
                     status: 'succeed',
                   },
                 )
+                token.owner = formatedCreatorHash
+                await token.save()
                 break
               }
               default:

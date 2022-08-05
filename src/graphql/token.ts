@@ -8,7 +8,7 @@ export const tokenResolver: IResolvers = {
   Query: {
     async getTokens(_: any, args: any) {
       const { where, page, limit } = args
-      console.log(args)
+
       return await getTokens({ where, page, limit })
     },
   },

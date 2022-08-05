@@ -181,8 +181,6 @@ export const getTokens = async ({
 
   const result = await Token.aggregatePaginate(aggregate, options)
 
-  console.log(result)
-
   return result
 }
 

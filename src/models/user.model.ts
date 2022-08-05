@@ -81,4 +81,21 @@ UserSchema.virtual('name').get(function (this: HydratedDocument<User>) {
   return `${this.firstName} ${this.lastName}`
 })
 
+UserSchema.method('toJSON', function (this: HydratedDocument<User>) {
+  const {
+    // @ts-ignore
+    __v,
+    _id,
+    nonce: _,
+    firstName,
+    lastName: __,
+    ...object
+  } = this.toObject()
+  // @ts-ignore
+  object.id = _id
+  // @ts-ignore
+  object.name = firstName
+  return object
+})
+
 export const User = mongoose.model('User', UserSchema)

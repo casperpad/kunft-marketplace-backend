@@ -9,7 +9,7 @@ export const collectionResolver: IResolvers = {
     },
     async getCollectionSlugs(_: any, __: any, ___: any, ____: any) {
       const data = await getCollectionSlugs()
-      console.log(data)
+
       return { data }
     },
   },
