@@ -27,211 +27,223 @@ import { Casper } from '@/models/casper.model'
 // const KEYS = Keys.Ed25519.parseKeyPair(publicKey, privateKey)
 
 export const _startMarketplaceEventStream = async () => {
-  console.info(`Starting Marketplace event listener`)
-  const es = new EventStream(NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS!)
-  const contractPackageHash = NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH!
+  try {
+    console.info(`Starting Marketplace event listener`)
+    const es = new EventStream(NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS!)
+    const contractPackageHash = NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH!
 
-  es.subscribe(EventName.DeployProcessed, async (events) => {
-    console.dir(events.id, { depth: null })
-    const parsedEvents = MarketplaceEventParser(
-      {
-        contractPackageHash: contractPackageHash.slice(5),
-        eventNames: [
-          MarketplaceEvents.SellOrderCreated,
-          MarketplaceEvents.SellOrderCanceled,
-          MarketplaceEvents.SellOrderBought,
-          MarketplaceEvents.BuyOrderCreated,
-          MarketplaceEvents.BuyOrderCanceled,
-          MarketplaceEvents.BuyOrderAccepted,
-        ],
-      },
-      events,
-    )
-    try {
-      if (parsedEvents && parsedEvents.success) {
-        console.info('***  MARKETPLACE EVENT  ***')
+    es.subscribe(EventName.DeployProcessed, async (events) => {
+      console.dir(events.id, { depth: null })
+      const parsedEvents = MarketplaceEventParser(
+        {
+          contractPackageHash: contractPackageHash.slice(5),
+          eventNames: [
+            MarketplaceEvents.SellOrderCreated,
+            MarketplaceEvents.SellOrderCanceled,
+            MarketplaceEvents.SellOrderBought,
+            MarketplaceEvents.BuyOrderCreated,
+            MarketplaceEvents.BuyOrderCanceled,
+            MarketplaceEvents.BuyOrderAccepted,
+          ],
+        },
+        events,
+      )
+      try {
+        if (parsedEvents && parsedEvents.success) {
+          console.info('***  MARKETPLACE EVENT  ***')
 
-        const promises = parsedEvents.data.map(async (event: any) => {
-          const eventName = event.name as MarketplaceEvents
-          const eventParams: CLMap<CLString, CLString> = event.clValue
-          console.info(`Handling ${eventName} event`)
-          const creator = eventParams.get(CLValueBuilder.string('creator'))
-          const collection = eventParams.get(
-            CLValueBuilder.string('collection'),
-          )
-          const tokenId = eventParams.get(CLValueBuilder.string('token_id'))
-          const payToken = eventParams.get(CLValueBuilder.string('pay_token'))
-          const price = eventParams.get(CLValueBuilder.string('price'))
-          const startTime = eventParams.get(CLValueBuilder.string('start_time'))
-          const buyer = eventParams.get(CLValueBuilder.string('buyer'))
-          const owner = eventParams.get(CLValueBuilder.string('owner'))
-          const additionalRecipient = eventParams.get(
-            CLValueBuilder.string('additional_recipient'),
-          )
-
-          const cep47Client = new CEP47Client(
-            NEXT_PUBLIC_CASPER_NODE_ADDRESS!,
-            NEXT_PUBLIC_CASPER_CHAIN_NAME!,
-          )
-          let collectionDB = await Collection.findOne({
-            contractHash: collection!.value(),
-          })
-          if (collectionDB === null) {
-            const name = await cep47Client.name()
-            console.info(
-              `Creating ${name} collection for ${collection!.value()} contract hash.`,
+          const promises = parsedEvents.data.map(async (event: any) => {
+            const eventName = event.name as MarketplaceEvents
+            const eventParams: CLMap<CLString, CLString> = event.clValue
+            console.info(`Handling ${eventName} event`)
+            const creator = eventParams.get(CLValueBuilder.string('creator'))
+            const collection = eventParams.get(
+              CLValueBuilder.string('collection'),
             )
-            const symbol = await cep47Client.symbol()
-            collectionDB = new Collection({
-              contractHash: collection!.value(),
-              slug: collection!.value(),
-              name,
-              symbol,
-              verified: false,
-            })
-            await collectionDB.save()
-          }
-          cep47Client.setContractHash(`hash-${collection!.value()}`)
-          const token_owner = await cep47Client.getOwnerOf(tokenId!.value())
-          let token = await Token.findOneAndUpdate(
-            {
-              collectionNFT: collectionDB,
-              tokenId: tokenId!.value(),
-            },
-            { owner: token_owner.slice(13) },
-            { new: true },
-          )
-          if (token === null) {
-            console.info(`Adding ${collectionDB.name} #${tokenId!.value()}`)
-            const tokenMeta: Map<string, string> =
-              await cep47Client.getTokenMeta(tokenId!.value())
-            const metadata = Array.from(tokenMeta.entries()).map((t) => {
-              return {
-                key: t[0],
-                value: t[1],
-              }
-            })
-            token = new Token({
-              collectionNFT: collectionDB,
-              tokenId: tokenId!.value(),
-              owner: token_owner.slice(13),
-              metadata,
-            })
-            await token.save()
-          }
-          let formatedCreatorHash = creator!.value()
-          formatedCreatorHash = formatedCreatorHash.slice(20).slice(0, -2)
-          // formatedCreatorHash = `account-hash-${formatedCreatorHash}`
-          switch (eventName) {
-            case MarketplaceEvents.SellOrderCreated: {
-              const order = await Sale.findOne({
-                creator: formatedCreatorHash,
-                token,
-                startTime: startTime!.value(),
-              })
-              if (order) break
-              const sellOrder = new Sale({
-                creator: formatedCreatorHash,
-                token,
-                payToken:
-                  payToken!.value() === 'None' ? undefined : payToken!.value(),
-                price: price!.value(),
-                startTime: startTime!.value(),
-                status: 'pending',
-              })
-              await sellOrder.save()
-              break
-            }
-            case MarketplaceEvents.SellOrderCanceled:
-              await Sale.findOneAndUpdate(
-                {
-                  creator: formatedCreatorHash,
-                  token,
-                  startTime: startTime!.value(),
-                },
-                { status: 'canceled' },
-              )
-              break
-            case MarketplaceEvents.SellOrderBought:
-              await Sale.findOneAndUpdate(
-                {
-                  creator: formatedCreatorHash,
-                  token,
-                  startTime: startTime!.value(),
-                },
-                {
-                  buyer: buyer!.value().slice(20).slice(0, -2),
-                  additionalRecipient: additionalRecipient?.value(),
-                  status: 'succeed',
-                },
-              )
-              break
+            const tokenId = eventParams.get(CLValueBuilder.string('token_id'))
+            const payToken = eventParams.get(CLValueBuilder.string('pay_token'))
+            const price = eventParams.get(CLValueBuilder.string('price'))
+            const startTime = eventParams.get(
+              CLValueBuilder.string('start_time'),
+            )
+            const buyer = eventParams.get(CLValueBuilder.string('buyer'))
+            const owner = eventParams.get(CLValueBuilder.string('owner'))
+            const additionalRecipient = eventParams.get(
+              CLValueBuilder.string('additional_recipient'),
+            )
 
-            case MarketplaceEvents.BuyOrderCreated: {
-              const buyOrder = new Offer({
-                creator: formatedCreatorHash,
-                token,
-                owner: token.owner,
-                payToken:
-                  payToken!.value() === 'None' ? undefined : payToken!.value(),
-                price: price!.value(),
-                startTime: startTime!.value(),
-                additionalRecipient:
-                  additionalRecipient!.value() === 'None'
-                    ? undefined
-                    : additionalRecipient!.value(),
-                status: 'pending',
+            const cep47Client = new CEP47Client(
+              NEXT_PUBLIC_CASPER_NODE_ADDRESS!,
+              NEXT_PUBLIC_CASPER_CHAIN_NAME!,
+            )
+            let collectionDB = await Collection.findOne({
+              contractHash: collection!.value(),
+            })
+            if (collectionDB === null) {
+              const name = await cep47Client.name()
+              console.info(
+                `Creating ${name} collection for ${collection!.value()} contract hash.`,
+              )
+              const symbol = await cep47Client.symbol()
+              collectionDB = new Collection({
+                contractHash: collection!.value(),
+                slug: collection!.value(),
+                name,
+                symbol,
+                verified: false,
               })
-              await buyOrder.save()
-              break
+              await collectionDB.save()
             }
-            case MarketplaceEvents.BuyOrderCanceled: {
-              Offer.findOneAndUpdate(
-                {
+            cep47Client.setContractHash(`hash-${collection!.value()}`)
+            const token_owner = await cep47Client.getOwnerOf(tokenId!.value())
+            let token = await Token.findOneAndUpdate(
+              {
+                collectionNFT: collectionDB,
+                tokenId: tokenId!.value(),
+              },
+              { owner: token_owner.slice(13) },
+              { new: true },
+            )
+            if (token === null) {
+              console.info(`Adding ${collectionDB.name} #${tokenId!.value()}`)
+              const tokenMeta: Map<string, string> =
+                await cep47Client.getTokenMeta(tokenId!.value())
+              const metadata = Array.from(tokenMeta.entries()).map((t) => {
+                return {
+                  key: t[0],
+                  value: t[1],
+                }
+              })
+              token = new Token({
+                collectionNFT: collectionDB,
+                tokenId: tokenId!.value(),
+                owner: token_owner.slice(13),
+                metadata,
+              })
+              await token.save()
+            }
+            let formatedCreatorHash = creator!.value()
+            formatedCreatorHash = formatedCreatorHash.slice(20).slice(0, -2)
+            // formatedCreatorHash = `account-hash-${formatedCreatorHash}`
+            switch (eventName) {
+              case MarketplaceEvents.SellOrderCreated: {
+                const order = await Sale.findOne({
                   creator: formatedCreatorHash,
                   token,
                   startTime: startTime!.value(),
-                },
-                {
-                  status: 'canceled',
-                },
-              )
-              break
-            }
-            case MarketplaceEvents.BuyOrderAccepted: {
-              Offer.findOneAndUpdate(
-                {
+                })
+                if (order) break
+                const sellOrder = new Sale({
                   creator: formatedCreatorHash,
                   token,
+                  payToken:
+                    payToken!.value() === 'None'
+                      ? undefined
+                      : payToken!.value(),
+                  price: price!.value(),
                   startTime: startTime!.value(),
-                },
-                {
-                  owner: owner!.value(),
-                  status: 'succeed',
-                },
-              )
-              break
+                  status: 'pending',
+                })
+                await sellOrder.save()
+                break
+              }
+              case MarketplaceEvents.SellOrderCanceled:
+                await Sale.findOneAndUpdate(
+                  {
+                    creator: formatedCreatorHash,
+                    token,
+                    startTime: startTime!.value(),
+                  },
+                  { status: 'canceled' },
+                )
+                break
+              case MarketplaceEvents.SellOrderBought:
+                await Sale.findOneAndUpdate(
+                  {
+                    creator: formatedCreatorHash,
+                    token,
+                    startTime: startTime!.value(),
+                  },
+                  {
+                    buyer: buyer!.value().slice(20).slice(0, -2),
+                    additionalRecipient: additionalRecipient?.value(),
+                    status: 'succeed',
+                  },
+                )
+                break
+
+              case MarketplaceEvents.BuyOrderCreated: {
+                const buyOrder = new Offer({
+                  creator: formatedCreatorHash,
+                  token,
+                  owner: token.owner,
+                  payToken:
+                    payToken!.value() === 'None'
+                      ? undefined
+                      : payToken!.value(),
+                  price: price!.value(),
+                  startTime: startTime!.value(),
+                  additionalRecipient:
+                    additionalRecipient!.value() === 'None'
+                      ? undefined
+                      : additionalRecipient!.value(),
+                  status: 'pending',
+                })
+                await buyOrder.save()
+                break
+              }
+              case MarketplaceEvents.BuyOrderCanceled: {
+                Offer.findOneAndUpdate(
+                  {
+                    creator: formatedCreatorHash,
+                    token,
+                    startTime: startTime!.value(),
+                  },
+                  {
+                    status: 'canceled',
+                  },
+                )
+                break
+              }
+              case MarketplaceEvents.BuyOrderAccepted: {
+                Offer.findOneAndUpdate(
+                  {
+                    creator: formatedCreatorHash,
+                    token,
+                    startTime: startTime!.value(),
+                  },
+                  {
+                    owner: owner!.value(),
+                    status: 'succeed',
+                  },
+                )
+                break
+              }
+              default:
+                console.error(`Unhandled event: ${eventName}`)
             }
-            default:
-              console.error(`Unhandled event: ${eventName}`)
-          }
-        })
-        await Promise.all(promises)
-        console.info('***     ***')
+          })
+          await Promise.all(promises)
+          console.info('***     ***')
+        }
+        const consumed_event = new Casper({ lasteEventId: events.id })
+        await consumed_event.save()
+      } catch (err: any) {
+        console.error(`***Marketplace EventStream Error***`)
+        console.error(err)
+        console.error(`*** ***`)
       }
-      const consumed_event = new Casper({ lasteEventId: events.id })
-      await consumed_event.save()
-    } catch (err: any) {
-      console.error(`***Marketplace EventStream Error***`)
-      console.error(err)
-      console.error(`*** ***`)
-    }
-  })
-  const consumedEvent = await Casper.find().sort({ createdAt: 'desc' }).limit(1)
-  if (consumedEvent.length === 1) {
-    console.info(`Start Event listener from ${consumedEvent[0].lasteEventId}`)
-    es.start(consumedEvent[0].lasteEventId)
-  } else es.start()
+    })
+    const consumedEvent = await Casper.find()
+      .sort({ createdAt: 'desc' })
+      .limit(1)
+    if (consumedEvent.length === 1) {
+      console.info(`Start Event listener from ${consumedEvent[0].lasteEventId}`)
+      es.start(consumedEvent[0].lasteEventId)
+    } else es.start()
+  } catch (error: any) {
+    console.error(error)
+  }
 }
 
 export const startMarketplaceEventStream = async () => {

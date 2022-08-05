@@ -15,4 +15,11 @@ router.post('/signin', validate(authValidation.signIn), authController.signIn)
 
 router.post('/signout', auth, authController.signOut)
 
+router.patch(
+  '/',
+  auth,
+  validate(authValidation.upateInfo),
+  authController.updateInfo,
+)
+
 export default router

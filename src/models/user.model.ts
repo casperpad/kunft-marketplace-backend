@@ -1,29 +1,21 @@
-import mongoose, { Schema, HydratedDocument, Model } from 'mongoose'
+import mongoose, { Schema, HydratedDocument } from 'mongoose'
 import validator from 'validator'
 
 interface User {
-  nonce: string
   publicKey: string
-  emailVerified: boolean
   verified: boolean
+  firstName?: string
+  lastName?: string
+  avatar?: string
+  description?: string
+  email?: string
+  emailVerified: boolean
   role: 'user' | 'admin'
-  firstName?: string | undefined
-  lastName?: string | undefined
-  email?: string | undefined
+  nonce: string
 }
 
 // UserSchema type
 const UserSchema = new Schema({
-  firstName: {
-    type: String,
-  },
-  lastName: {
-    type: String,
-  },
-  nonce: {
-    type: String,
-    required: true,
-  },
   publicKey: {
     type: String,
     required: true,
@@ -31,6 +23,24 @@ const UserSchema = new Schema({
     dropDups: true,
     lowercase: true,
     index: true,
+  },
+  verified: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+
+  firstName: {
+    type: String,
+  },
+  lastName: {
+    type: String,
+  },
+  avatar: {
+    type: String,
+  },
+  description: {
+    type: String,
   },
   email: {
     type: String,
@@ -42,10 +52,9 @@ const UserSchema = new Schema({
     type: Boolean,
     default: false,
   },
-  verified: {
-    type: Boolean,
+  nonce: {
+    type: String,
     required: true,
-    default: false,
   },
   role: {
     type: String,

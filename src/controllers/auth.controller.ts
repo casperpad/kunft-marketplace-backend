@@ -129,3 +129,25 @@ export const signOut = catchAsync(
     res.json({ ok: true })
   },
 )
+
+export const updateInfo = catchAsync(
+  async (req: express.Request, res: express.Response) => {
+    const info = req.body
+    info.firstName = info.name
+    delete info.name
+    const oldUser = req.headers.user! as any
+    console.log(info, req.headers)
+    const user = await User.findOneAndUpdate(
+      { publicKey: oldUser.publicKey },
+      { ...info },
+      { new: true },
+    )
+    const userObject = user.toJSON()
+    userObject.id = user._id
+    delete userObject.__v
+    delete userObject._id
+    delete userObject.nonce
+    console.log(userObject)
+    res.json(userObject)
+  },
+)

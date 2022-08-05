@@ -13,3 +13,12 @@ export const signIn = {
     signature: Joi.string().required(),
   }),
 }
+
+export const upateInfo = {
+  body: Joi.object().keys({
+    name: Joi.string().required(),
+    email: Joi.string().email().required(),
+    description: Joi.string(),
+    avatar: Joi.string(),
+  }),
+}
