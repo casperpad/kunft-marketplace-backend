@@ -65,6 +65,7 @@ specifiers:
   joi: ^17.6.0
   jsonwebtoken: ^8.5.1
   lint-staged: ^13.0.3
+  lodash: ^4.17.21
   mongodb-memory-server: ^8.7.2
   mongoose: 6.5.0
   mongoose-aggregate-paginate-v2: ^1.0.6
@@ -130,6 +131,7 @@ dependencies:
   husky: 8.0.1
   joi: 17.6.0
   jsonwebtoken: 8.5.1
+  lodash: 4.17.21
   mongodb-memory-server: 8.7.2
   mongoose: 6.5.0
   mongoose-aggregate-paginate-v2: 1.0.6

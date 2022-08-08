@@ -20,8 +20,8 @@ export const tokenResolver: IResolvers = {
     },
     // TODO ADD Authentication
     async favoriteToken(_: any, args: any) {
-      // const { slug, tokenId ,publicKey} = args
-      const token = await favoriteToken(args)
+      const { slug, tokenId, publicKey } = args
+      const token = await favoriteToken(slug, tokenId, publicKey)
       return { token }
     },
   },

@@ -31,6 +31,7 @@ export const errorHandler = (
   res: express.Response,
   _next: express.NextFunction,
 ) => {
+  console.error(err)
   let { statusCode, message } = err
   if (APP_ENV === 'production' && !err.isOperational) {
     statusCode = StatusCodes.INTERNAL_SERVER_ERROR

@@ -184,6 +184,14 @@ export const getTokens = async ({
   return result
 }
 
+/**
+ * @deprecated
+ * Use _addToken function
+ * Add token by `contractHash` and `tokenId`
+ * @param contractHash CEP47 contract hash
+ * @param tokenId token id
+ * @returns Token
+ */
 export const addToken = async (contractHash: string, tokenId: string) => {
   const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
   const stateRootHash = await casperClient.nodeClient.getStateRootHash()
@@ -233,15 +241,18 @@ export const addToken = async (contractHash: string, tokenId: string) => {
   return token
 }
 
-export const favoriteToken = async ({
-  slug,
-  tokenId,
-  publicKey,
-}: {
-  slug: string
-  tokenId: string
-  publicKey: string
-}) => {
+/**
+ * Favorite given token and returns updated token
+ * @param slug Identifier of collection
+ * @param tokenId token id
+ * @param publicKey favorited user public key
+ * @returns Token
+ */
+export const favoriteToken = async (
+  slug: string,
+  tokenId: string,
+  publicKey: string,
+) => {
   const collectionNFT = await Collection.findOne({ slug })
 
   if (collectionNFT === null) throw Error(`Not exist ${slug}`)
@@ -262,4 +273,77 @@ export const favoriteToken = async ({
 
   token = ((await getTokens({ where: { slug, tokenId } })) as any).tokens[0]
   return token
+}
+
+export const addUserToken = async (accountHash: string) => {
+  let page = 1
+  const limit = 10
+  let added = 0
+  do {
+    const { data } = await axios.get<MakeServices.TokensByOwnerResponse>(
+      `https://event-store-api-clarity-testnet.make.services/accounts/${accountHash}/nft-tokens?fields=contract_package&page=${page}&limit=${limit}`,
+    )
+
+    const promises = data.data.map(async (token) => {
+      const metadata = {} as any
+      token.metadata.forEach((meta) => {
+        metadata[meta.key] = meta.value
+      })
+      const result = await _addToken(
+        token.contract_package_hash,
+        token.token_id,
+        metadata,
+        token.owner_account_hash,
+      )
+      return result
+    })
+    const result = await Promise.all(promises)
+    added += result.filter((r) => r).length
+    if (data.pageCount === page) break
+    page += 1
+    // eslint-disable-next-line no-constant-condition
+  } while (true)
+  return added
+}
+
+const _addToken = async (
+  contractPackageHash: string,
+  tokenId: string,
+  metadata: any,
+  owner: string,
+): Promise<boolean> => {
+  let collectionNFT = await Collection.findOne({ contractPackageHash })
+  if (collectionNFT === null) {
+    const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
+    const stateRootHash = await casperClient.nodeClient.getStateRootHash()
+    const { ContractPackage } = await casperClient.nodeClient.getBlockState(
+      stateRootHash,
+      `hash-${contractPackageHash!}`,
+      [],
+    )
+    const contractHash = ContractPackage?.versions.pop()?.contractHash
+    if (!contractHash) return false
+    collectionNFT = await addCollection(
+      contractPackageHash,
+      contractHash,
+      false,
+      false,
+    )
+  }
+
+  await Token.findOneAndUpdate(
+    { collectionNFT, tokenId },
+    {
+      collectionNFT,
+      tokenId,
+      metadata,
+      owner,
+    },
+    {
+      upsert: true,
+      new: true,
+    },
+  )
+
+  return true
 }
