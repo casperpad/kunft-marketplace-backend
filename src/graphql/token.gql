@@ -33,7 +33,8 @@ type Token {
   owner: String!
   sales: [Sale!]!
   offers: [Offer!]!
-  pendingSale: Sale
+  price: Sale
+  listed: Boolean!
 }
 
 type GetTokensResponse {

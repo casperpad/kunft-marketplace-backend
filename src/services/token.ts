@@ -31,12 +31,30 @@ export const getTokens = async ({
   const { slug, owner, promoted, tokenId } = where
   // let collectionNFTId: string | undefined
   const matchQuery = {} as any
-  if (slug) {
+  if (slug || tokenId) {
     const collectionDB = await Collection.findOne({ slug })
 
     if (collectionDB === null) throw Error(`Not exist ${slug}`)
 
     matchQuery.collectionNFT = collectionDB._id
+    if (tokenId) {
+      matchQuery.tokenId = tokenId
+
+      const client = new CEP47Client(
+        NEXT_PUBLIC_CASPER_NODE_ADDRESS,
+        NEXT_PUBLIC_CASPER_CHAIN_NAME,
+      )
+      client.setContractHash(`hash-${collectionDB.contractHash}`)
+
+      const owner = await client.getOwnerOf(tokenId)
+      await Token.findOneAndUpdate(
+        {
+          collectionNFT: collectionDB._id,
+          tokenId,
+        },
+        { owner: owner.slice(13) },
+      )
+    }
   }
   if (promoted) {
     const collectionDBs = await Collection.find({ promoted })
@@ -60,10 +78,6 @@ export const getTokens = async ({
     // } while (true)
     //
   }
-  if (tokenId) {
-    matchQuery.tokenId = tokenId
-  }
-
   const aggregate = Token.aggregate([
     {
       $match: {
@@ -105,10 +119,28 @@ export const getTokens = async ({
               token: 0,
             },
           },
+          { $sort: { createdAt: -1 } },
         ],
       },
     },
-    { $sort: { 'sales.createdAt': -1 } },
+    {
+      $set: {
+        listed: {
+          $in: ['pending', '$sales.status'],
+        },
+      },
+    },
+    {
+      $set: {
+        price: {
+          $cond: {
+            if: { $eq: [{ $size: '$sales' }, 0] },
+            then: null,
+            else: { $arrayElemAt: ['$sales', 0] },
+          },
+        },
+      },
+    },
     {
       $lookup: {
         from: 'offers',
@@ -123,34 +155,11 @@ export const getTokens = async ({
               token: 0,
             },
           },
+          { $sort: { createdAt: -1 } },
         ],
       },
     },
-    { $sort: { 'offers.createdAt': -1 } },
-    {
-      $set: {
-        pendingSale: {
-          $let: {
-            vars: {
-              pendingSales: {
-                $filter: {
-                  input: '$sales',
-                  as: 'sale',
-                  cond: { $eq: ['$$sale.status', 'pending'] },
-                },
-              },
-            },
-            in: {
-              $cond: {
-                if: { $eq: [{ $size: '$$pendingSales' }, 0] },
-                then: null,
-                else: { $arrayElemAt: ['$$pendingSales', 0] },
-              },
-            },
-          },
-        },
-      },
-    },
+
     {
       $project: {
         _id: 0,
