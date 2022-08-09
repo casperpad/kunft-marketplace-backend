@@ -1,5 +1,5 @@
 import mongoose, { Schema } from 'mongoose'
-import { SaleDocument, SaleModel, SaleSchema } from '../interfaces/mongoose.gen'
+import { SaleSchema } from '../interfaces/mongoose.gen'
 
 const SaleSchema = new Schema(
   {

@@ -16,7 +16,7 @@ const NEXT_PUBLIC_CASPER_CHAIN_NAME = process.env.NEXT_PUBLIC_CASPER_CHAIN_NAME!
 const MONGODB_URL = process.env.MONGODB_URL!
 const REDIS_URL = process.env.REDIS_URL!
 const NODE_ENV = process.env.NODE_ENV as 'development' | 'production'
-const APP_ENV = process.env.APP_ENV || 'development'
+const APP_ENV = NODE_ENV
 
 const JWT_SECRET =
   process.env.JWT_SECRET ||

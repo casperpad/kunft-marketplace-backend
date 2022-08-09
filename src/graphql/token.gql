@@ -24,6 +24,11 @@ type Offer {
   updatedAt: GraphQLDate!
 }
 
+type Price {
+  price: String!
+  payToken: String
+}
+
 type Token {
   collection: Collection!
   tokenId: String!
@@ -33,7 +38,7 @@ type Token {
   owner: String!
   sales: [Sale!]!
   offers: [Offer!]!
-  price: Sale
+  price: Price
   listed: Boolean!
 }
 

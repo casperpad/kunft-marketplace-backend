@@ -1,6 +1,5 @@
 import mongoose, { Schema } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
-import { TokenDocument } from '../interfaces/mongoose.gen'
 
 const TokenSchema = new Schema({
   collectionNFT: {

@@ -75,6 +75,18 @@ export const signUp = catchAsync(
     })
     await user.save()
 
+    const signObject = user.toJSON()
+
+    const token = signJwt(signObject, JWT_SECRET, {
+      expiresIn: JWT_EXPIRE,
+    })
+
+    res.cookie(JWT_NAME, token, {
+      maxAge: JWT_EXPIRE * 1000,
+      httpOnly: process.env.NODE_ENV !== 'development',
+      secure: process.env.NODE_ENV !== 'development',
+    })
+
     res.json(user)
   },
 )

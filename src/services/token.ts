@@ -134,9 +134,28 @@ export const getTokens = async ({
       $set: {
         price: {
           $cond: {
-            if: { $eq: [{ $size: '$sales' }, 0] },
+            if: {
+              $eq: [
+                {
+                  $size: '$sales',
+                },
+                0,
+              ],
+            },
             then: null,
-            else: { $arrayElemAt: ['$sales', 0] },
+            else: {
+              $let: {
+                vars: {
+                  sale: {
+                    $arrayElemAt: ['$sales', 0],
+                  },
+                },
+                in: {
+                  price: '$$sale.price',
+                  payToken: '$$sale.payToken',
+                },
+              },
+            },
           },
         },
       },
