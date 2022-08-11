@@ -1,18 +1,22 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import contrats from './contracts'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
 const PORT = process.env.PORT || 8000
-const {
-  SENTRY_DSN,
-  NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS,
-  NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH,
-} = process.env
+const { SENTRY_DSN, NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS } = process.env
 
 const NEXT_PUBLIC_CASPER_NODE_ADDRESS =
   process.env.NEXT_PUBLIC_CASPER_NODE_ADDRESS!
-const NEXT_PUBLIC_CASPER_CHAIN_NAME = process.env.NEXT_PUBLIC_CASPER_CHAIN_NAME!
+const NEXT_PUBLIC_CASPER_CHAIN_NAME = process.env
+  .NEXT_PUBLIC_CASPER_CHAIN_NAME! as CasperChainName
+
+type CasperChainName = 'casper' | 'casper-test'
+
+const NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH =
+  contrats.marketplace[NEXT_PUBLIC_CASPER_CHAIN_NAME].contractPackageHash
+
 const MONGODB_URL = process.env.MONGODB_URL!
 const REDIS_URL = process.env.REDIS_URL!
 const NODE_ENV = process.env.NODE_ENV as 'development' | 'production'

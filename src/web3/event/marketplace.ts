@@ -126,24 +126,26 @@ export const _startMarketplaceEventStream = async () => {
             // formatedCreatorHash = `account-hash-${formatedCreatorHash}`
             switch (eventName) {
               case MarketplaceEvents.SellOrderCreated: {
-                const order = await Sale.findOne({
-                  creator: formatedCreatorHash,
-                  token,
-                  startTime: startTime!.value(),
-                })
-                if (order) break
-                const sellOrder = new Sale({
-                  creator: formatedCreatorHash,
-                  token,
-                  payToken:
-                    payToken!.value() === 'None'
-                      ? undefined
-                      : payToken!.value(),
-                  price: price!.value(),
-                  startTime: startTime!.value(),
-                  status: 'pending',
-                })
-                await sellOrder.save()
+                await Sale.findOneAndUpdate(
+                  {
+                    creator: formatedCreatorHash,
+                    token,
+                    startTime: startTime!.value(),
+                  },
+                  {
+                    creator: formatedCreatorHash,
+                    token,
+                    payToken:
+                      payToken!.value() === 'None'
+                        ? undefined
+                        : payToken!.value().slice(18).slice(0, -2),
+                    price: price!.value(),
+                    startTime: startTime!.value(),
+                    status: 'pending',
+                  },
+                  { upsert: true },
+                )
+
                 break
               }
               case MarketplaceEvents.SellOrderCanceled:
@@ -166,7 +168,11 @@ export const _startMarketplaceEventStream = async () => {
                   },
                   {
                     buyer: formattedbuyer,
-                    additionalRecipient: additionalRecipient?.value(),
+                    additionalRecipient:
+                      additionalRecipient &&
+                      additionalRecipient.value() !== 'None'
+                        ? additionalRecipient
+                        : undefined,
                     status: 'succeed',
                   },
                 )
