@@ -47,11 +47,18 @@ type GetTokensResponse {
   paginationInfo: PaginationInfo!
 }
 
+input MetadataInput {
+  key: String!
+  values: [String!]!
+}
+
 input GetTokensInput {
   slug: String
   owner: String
   tokenId: String
   promoted: Boolean
+  listed: Boolean
+  metadata: [MetadataInput!]
 }
 
 type Query {

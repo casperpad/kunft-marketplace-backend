@@ -11,7 +11,10 @@ export const getTokens = catchAsync(
     const { page, limit } = req.query
 
     const tokens = await _getTokens({
-      where: { slug: collection },
+      where: {
+        slug: collection,
+        metadata: [{ key: 'eye', values: ['Cyan', 'Green'] }],
+      },
       page: 1,
       limit: 20,
     })

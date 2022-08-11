@@ -12,11 +12,18 @@ import {
 } from '../config'
 import { addCollection } from './collection'
 
+interface MetadataInput {
+  key: string
+  values: string[]
+}
+
 interface GetTokensInput {
   slug?: string
   owner?: string
   tokenId?: string
   promoted?: boolean
+  listed?: boolean
+  metadata?: MetadataInput[]
 }
 
 export const getTokens = async ({
@@ -28,7 +35,7 @@ export const getTokens = async ({
   page?: number
   limit?: number
 }) => {
-  const { slug, owner, promoted, tokenId } = where
+  const { slug, owner, promoted, tokenId, listed, metadata } = where
   // let collectionNFTId: string | undefined
   const matchQuery = {} as any
   if (slug || tokenId) {
@@ -78,12 +85,24 @@ export const getTokens = async ({
     // } while (true)
     //
   }
+  if (listed !== undefined) {
+    matchQuery.listed = listed
+  }
+  if (metadata) {
+    let subQueries: any[] = []
+    metadata.forEach((m) => {
+      const subQuery: any[] = []
+      m.values.forEach((value) => {
+        subQuery.push({
+          [`metadata.${m.key}`]: value,
+        })
+      })
+      subQueries = subQueries.concat(subQuery)
+    })
+    matchQuery['$or'] = subQueries
+  }
+
   const aggregate = Token.aggregate([
-    {
-      $match: {
-        ...matchQuery,
-      },
-    },
     {
       $lookup: {
         from: 'collections',
@@ -128,6 +147,11 @@ export const getTokens = async ({
         listed: {
           $in: ['pending', '$sales.status'],
         },
+      },
+    },
+    {
+      $match: {
+        ...matchQuery,
       },
     },
     {
