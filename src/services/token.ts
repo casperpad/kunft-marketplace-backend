@@ -66,7 +66,7 @@ export const getTokens = async ({
   if (promoted) {
     const collectionDBs = await Collection.find({ promoted })
     if (collectionDBs.length > 0) {
-      const index = random(0, collectionDBs.length)
+      const index = random(0, collectionDBs.length - 1)
       matchQuery.collectionNFT = collectionDBs[index]._id
     }
   }
