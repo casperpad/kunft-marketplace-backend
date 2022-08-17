@@ -3,6 +3,8 @@ import { CasperClient } from 'casper-js-sdk'
 import { CEP47Client } from 'casper-cep47-js-client'
 import { StatusCodes } from 'http-status-codes'
 import random from 'lodash/random'
+import forIn from 'lodash/forIn'
+import { PipelineStage } from 'mongoose'
 import { ApiError } from '@/utils'
 import { Token, Collection, User } from '@/models'
 import { MakeServices } from '@/types'
@@ -13,8 +15,13 @@ import {
 import { addCollection } from './collection'
 
 interface MetadataInput {
-  key: string
-  values: string[]
+  [key: string]: string[]
+}
+
+interface PriceInput {
+  payToken: string
+  min: string
+  max: string
 }
 
 interface GetTokensInput {
@@ -23,7 +30,8 @@ interface GetTokensInput {
   tokenId?: string
   promoted?: boolean
   listed?: boolean
-  metadata?: MetadataInput[]
+  metadata?: MetadataInput
+  price?: PriceInput
 }
 
 export const getTokens = async ({
@@ -35,9 +43,10 @@ export const getTokens = async ({
   page?: number
   limit?: number
 }) => {
-  const { slug, owner, promoted, tokenId, listed, metadata } = where
+  const { slug, owner, promoted, tokenId, listed, metadata, price } = where
   // let collectionNFTId: string | undefined
   const matchQuery = {} as any
+
   if (slug || tokenId) {
     const collectionDB = await Collection.findOne({ slug })
 
@@ -90,11 +99,11 @@ export const getTokens = async ({
   }
   if (metadata) {
     let subQueries: any[] = []
-    metadata.forEach((m) => {
+    forIn(metadata, (values, key) => {
       const subQuery: any[] = []
-      m.values.forEach((value) => {
+      values.forEach((value) => {
         subQuery.push({
-          [`metadata.${m.key}`]: value,
+          [`metadata.${key}`]: value,
         })
       })
       subQueries = subQueries.concat(subQuery)
@@ -102,7 +111,7 @@ export const getTokens = async ({
     matchQuery['$or'] = subQueries
   }
 
-  const aggregate = Token.aggregate([
+  const additionalQueries: PipelineStage[] = [
     {
       $lookup: {
         from: 'collections',
@@ -210,7 +219,178 @@ export const getTokens = async ({
         collectionNFT: 0,
       },
     },
-  ])
+  ]
+
+  if (price) {
+    const query: PipelineStage = {
+      $match: {
+        $expr: {
+          $and: [
+            {
+              $cond: {
+                if: {
+                  $or: [
+                    {
+                      $eq: [
+                        {
+                          $cmp: [
+                            {
+                              $cond: {
+                                if: {
+                                  $or: [
+                                    {
+                                      $eq: ['$price', null],
+                                    },
+                                    {
+                                      $eq: ['$price.price', null],
+                                    },
+                                  ],
+                                },
+                                then: 0,
+                                else: {
+                                  $strLenCP: '$price.price',
+                                },
+                              },
+                            },
+                            price.min.length,
+                          ],
+                        },
+                        1,
+                      ],
+                    },
+                    {
+                      $and: [
+                        {
+                          $eq: [
+                            {
+                              $cmp: [
+                                {
+                                  $cond: {
+                                    if: {
+                                      $or: [
+                                        {
+                                          $eq: ['$price', null],
+                                        },
+                                        {
+                                          $eq: ['$price.price', null],
+                                        },
+                                      ],
+                                    },
+                                    then: 0,
+                                    else: {
+                                      $strLenCP: '$price.price',
+                                    },
+                                  },
+                                },
+                                price.min.length,
+                              ],
+                            },
+                            0,
+                          ],
+                        },
+                        {
+                          $ne: [
+                            {
+                              $cmp: ['$price.price', price.min],
+                            },
+                            -1,
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                then: true,
+                else: false,
+              },
+            },
+            {
+              $cond: {
+                if: {
+                  $or: [
+                    {
+                      $eq: [
+                        {
+                          $cmp: [
+                            {
+                              $cond: {
+                                if: {
+                                  $or: [
+                                    {
+                                      $eq: ['$price', null],
+                                    },
+                                    {
+                                      $eq: ['$price.price', null],
+                                    },
+                                  ],
+                                },
+                                then: 0,
+                                else: {
+                                  $strLenCP: '$price.price',
+                                },
+                              },
+                            },
+                            price.max.length,
+                          ],
+                        },
+                        -1,
+                      ],
+                    },
+                    {
+                      $and: [
+                        {
+                          $eq: [
+                            {
+                              $cmp: [
+                                {
+                                  $cond: {
+                                    if: {
+                                      $or: [
+                                        {
+                                          $eq: ['$price', null],
+                                        },
+                                        {
+                                          $eq: ['$price.price', null],
+                                        },
+                                      ],
+                                    },
+                                    then: 0,
+                                    else: {
+                                      $strLenCP: '$price.price',
+                                    },
+                                  },
+                                },
+                                price.max.length,
+                              ],
+                            },
+                            0,
+                          ],
+                        },
+                        {
+                          $ne: [
+                            {
+                              $cmp: ['$price.price', price.max],
+                            },
+                            1,
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                then: true,
+                else: false,
+              },
+            },
+          ],
+        },
+      },
+    }
+    additionalQueries.push(query)
+    // console.dir(query, { depth: null })
+  }
+
+  const aggregate = Token.aggregate(additionalQueries)
 
   const customLabels = {
     totalDocs: 'total',

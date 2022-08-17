@@ -47,9 +47,10 @@ type GetTokensResponse {
   paginationInfo: PaginationInfo!
 }
 
-input MetadataInput {
-  key: String!
-  values: [String!]!
+input PriceInput {
+  payToken: String!
+  min: String!
+  max: String!
 }
 
 input GetTokensInput {
@@ -58,7 +59,8 @@ input GetTokensInput {
   tokenId: String
   promoted: Boolean
   listed: Boolean
-  metadata: [MetadataInput!]
+  metadata: Metadata
+  price: PriceInput
 }
 
 type Query {
