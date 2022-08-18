@@ -8,6 +8,7 @@ type Collection {
   verified: Boolean!
   promoted: Boolean!
   image: String
+  logo: String
   twitter: String
   discord: String
 }

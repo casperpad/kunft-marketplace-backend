@@ -1,6 +1,5 @@
 import mongoose, { Schema } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
-import { CollectionDocument } from '../interfaces/mongoose.gen'
 
 const CollectionSchema = new Schema({
   contractPackageHash: {
@@ -31,6 +30,7 @@ const CollectionSchema = new Schema({
   verified: { type: Boolean, required: true, default: false },
   promoted: { type: Boolean, required: true, default: false },
   image: { type: String },
+  logo: { type: String },
   twitter: { type: String },
   discord: { type: String },
   website: { type: String },

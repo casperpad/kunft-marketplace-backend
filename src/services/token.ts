@@ -521,6 +521,7 @@ export const addUserToken = async (accountHash: string) => {
       token.metadata.forEach((meta) => {
         metadata[meta.key] = meta.value
       })
+
       const result = await _addToken(
         token.contract_package_hash,
         token.token_id,
@@ -553,11 +554,13 @@ const _addToken = async (
       `hash-${contractPackageHash!}`,
       [],
     )
+
     const contractHash = ContractPackage?.versions.pop()?.contractHash
+
     if (!contractHash) return false
     collectionNFT = await addCollection(
       contractPackageHash,
-      contractHash,
+      contractHash.slice(9),
       false,
       false,
     )
