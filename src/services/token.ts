@@ -44,18 +44,20 @@ export const getTokens = async ({
   limit?: number
 }) => {
   const { slug, owner, promoted, tokenId, listed, metadata, price } = where
-  // let collectionNFTId: string | undefined
-  const matchQuery = {} as any
+
+  let pipeline: PipelineStage[] = []
 
   if (slug || tokenId) {
     const collectionDB = await Collection.findOne({ slug })
 
     if (collectionDB === null) throw Error(`Not exist ${slug}`)
 
-    matchQuery.collectionNFT = collectionDB._id
+    pipeline.push({
+      $match: {
+        collectionNFT: collectionDB._id,
+      },
+    })
     if (tokenId) {
-      matchQuery.tokenId = tokenId
-
       const client = new CEP47Client(
         NEXT_PUBLIC_CASPER_NODE_ADDRESS,
         NEXT_PUBLIC_CASPER_CHAIN_NAME,
@@ -68,21 +70,39 @@ export const getTokens = async ({
           collectionNFT: collectionDB._id,
           tokenId,
         },
-        { owner: owner.slice(13) },
+        {
+          owner: owner.slice(13),
+          $inc: {
+            viewed: 1,
+          },
+        },
       )
+      pipeline.push({
+        $match: {
+          tokenId,
+        },
+      })
     }
   }
   if (promoted) {
     const collectionDBs = await Collection.find({ promoted })
     if (collectionDBs.length > 0) {
       const index = random(0, collectionDBs.length - 1)
-      matchQuery.collectionNFT = collectionDBs[index]._id
+
+      pipeline.push({
+        $match: {
+          collectionNFT: collectionDBs[index]._id,
+        },
+      })
     }
   }
 
   if (owner) {
-    matchQuery.owner = owner
-
+    pipeline.push({
+      $match: {
+        owner,
+      },
+    })
     // let page = 1
     // const limit = 10
     // do {
@@ -93,9 +113,6 @@ export const getTokens = async ({
     //   page += 1
     // } while (true)
     //
-  }
-  if (listed !== undefined) {
-    matchQuery.listed = listed
   }
   if (metadata) {
     let subQueries: any[] = []
@@ -108,10 +125,14 @@ export const getTokens = async ({
       })
       subQueries = subQueries.concat(subQuery)
     })
-    matchQuery['$or'] = subQueries
-  }
 
-  const additionalQueries: PipelineStage[] = [
+    pipeline.push({
+      $match: {
+        $or: subQueries,
+      },
+    })
+  }
+  const basePipeline: PipelineStage[] = [
     {
       $lookup: {
         from: 'collections',
@@ -156,11 +177,6 @@ export const getTokens = async ({
         listed: {
           $in: ['pending', '$sales.status'],
         },
-      },
-    },
-    {
-      $match: {
-        ...matchQuery,
       },
     },
     {
@@ -220,6 +236,15 @@ export const getTokens = async ({
       },
     },
   ]
+  pipeline = pipeline.concat(basePipeline)
+
+  if (listed !== undefined) {
+    pipeline.push({
+      $match: {
+        listed,
+      },
+    })
+  }
 
   if (price) {
     const query: PipelineStage = {
@@ -386,11 +411,11 @@ export const getTokens = async ({
         },
       },
     }
-    additionalQueries.push(query)
+    pipeline.push(query)
     // console.dir(query, { depth: null })
   }
 
-  const aggregate = Token.aggregate(additionalQueries)
+  const aggregate = Token.aggregate(pipeline)
 
   const customLabels = {
     totalDocs: 'total',
@@ -411,7 +436,7 @@ export const getTokens = async ({
     customLabels,
   }
 
-  const result = await Token.aggregatePaginate(aggregate, options)
+  const result = (await Token.aggregatePaginate(aggregate, options)) as any
 
   return result
 }

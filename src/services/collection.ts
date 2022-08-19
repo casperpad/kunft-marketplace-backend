@@ -5,69 +5,79 @@ import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
 } from '../config'
+import { PipelineStage } from 'mongoose'
 
-export const getCollections = async (
-  query: string,
-  page: number,
-  limit: number,
-) => {
-  const aggregate = Collection.aggregate([
-    // {
-    //   $search: {
-    //     compound: {
-    //       must: [
-    //         {
-    //           text: {
-    //             query,
-    //             path: 'contractHash',
-    //             score: {
-    //               boost: {
-    //                 value: 9,
-    //               },
-    //             },
-    //           },
-    //         },
+// {
+//   $search: {
+//     compound: {
+//       must: [
+//         {
+//           text: {
+//             query,
+//             path: 'contractHash',
+//             score: {
+//               boost: {
+//                 value: 9,
+//               },
+//             },
+//           },
+//         },
 
-    //         {
-    //           text: {
-    //             query,
-    //             path: 'name',
-    //             fuzzy: { maxEdits: 1, prefixLength: 2 },
-    //             score: {
-    //               boost: {
-    //                 value: 9,
-    //               },
-    //             },
-    //           },
-    //         },
-    //         {
-    //           text: {
-    //             query,
-    //             path: 'symbol',
-    //             fuzzy: { maxEdits: 1, prefixLength: 2 },
-    //             score: {
-    //               boost: {
-    //                 value: 5,
-    //               },
-    //             },
-    //           },
-    //         },
-    //       ],
-    //     },
-    //   },
-    // },
-    {
-      $match: {
-        slug: query,
-      },
-    },
+//         {
+//           text: {
+//             query,
+//             path: 'name',
+//             fuzzy: { maxEdits: 1, prefixLength: 2 },
+//             score: {
+//               boost: {
+//                 value: 9,
+//               },
+//             },
+//           },
+//         },
+//         {
+//           text: {
+//             query,
+//             path: 'symbol',
+//             fuzzy: { maxEdits: 1, prefixLength: 2 },
+//             score: {
+//               boost: {
+//                 value: 5,
+//               },
+//             },
+//           },
+//         },
+//       ],
+//     },
+//   },
+// },
+
+export const getCollections = async ({
+  query,
+  page = 1,
+  limit = 20,
+}: {
+  query?: string
+  page?: number
+  limit?: number
+}) => {
+  const pipeline: PipelineStage[] = [
     {
       $project: {
         _id: 0,
         __v: 0,
       },
     },
-  ])
+  ]
+  if (query) {
+    pipeline.push({
+      $match: {
+        slug: query,
+      },
+    })
+  }
+
+  const aggregate = Collection.aggregate(pipeline)
 
   const customLabels = {
     totalDocs: 'total',

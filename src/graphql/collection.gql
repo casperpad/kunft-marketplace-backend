@@ -26,7 +26,7 @@ type PaginationInfo {
 }
 
 type GetCollectionsResponse {
-  collections: [Collection!]
+  collections: [Collection!]!
   paginationInfo: PaginationInfo!
 }
 
@@ -40,11 +40,7 @@ type GetCollectionSlugsResponse {
 }
 
 type Query {
-  getCollections(
-    query: String!
-    page: Int!
-    limit: Int!
-  ): GetCollectionsResponse
+  getCollections(query: String, page: Int, limit: Int): GetCollectionsResponse
   getCollectionSlugs: GetCollectionSlugsResponse
 }
 
