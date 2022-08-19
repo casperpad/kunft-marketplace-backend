@@ -14,7 +14,7 @@ export const getCollections = async (
 
   // @ts-ignore
   const { query, page, limit } = req.query as any
-  const collectionDB = await _getCollections(query, page, limit)
+  const collectionDB = await _getCollections({ query, page, limit })
   res.json(collectionDB)
 }
 
