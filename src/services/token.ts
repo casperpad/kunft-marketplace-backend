@@ -6,7 +6,7 @@ import random from 'lodash/random'
 import forIn from 'lodash/forIn'
 import { PipelineStage } from 'mongoose'
 import { ApiError } from '@/utils'
-import { Token, Collection, User } from '@/models'
+import { Token, Collection, User, Sale } from '@/models'
 import { MakeServices } from '@/types'
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
@@ -606,4 +606,79 @@ const _addToken = async (
   )
 
   return true
+}
+
+export const getHighestSalesInfo = async (slug: string, tokenId: string) => {
+  const collectionNFT = await Collection.findOne({ slug })
+  if (collectionNFT === null)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Not found collection')
+  const token = await Token.findOne({ collectionNFT, tokenId })
+  if (token === null)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Not found token')
+
+  const pipeline: PipelineStage[] = []
+
+  pipeline.push({
+    $match: {
+      token: token._id,
+    },
+  })
+
+  pipeline.push({
+    $lookup: {
+      from: 'sales',
+      localField: '_id',
+      foreignField: 'token',
+      as: 'highestSale',
+      pipeline: [
+        {
+          $set: {
+            priceLen: {
+              $strLenCP: '$price',
+            },
+          },
+        },
+        {
+          $sort: {
+            priceLen: -1,
+            price: -1,
+          },
+        },
+        {
+          $group: {
+            _id: '$payToken',
+            price: {
+              $first: '$price',
+            },
+          },
+        },
+        {
+          $set: {
+            payToken: '$_id',
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+          },
+        },
+      ],
+    },
+  })
+
+  pipeline.push({
+    $unset: [
+      '_id',
+      'creator',
+      'startTime',
+      'token',
+      '__v',
+      'createdAt',
+      'updatedAt',
+    ],
+  })
+
+  const highestSale = await Sale.aggregate(pipeline)
+  if (highestSale.length !== 1) return null
+  return highestSale[0].highestSale
 }

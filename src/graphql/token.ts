@@ -2,7 +2,12 @@ import { IResolvers } from '@graphql-tools/utils'
 import GraphQLDate from 'graphql-date'
 // @ts-ignore
 import GraphQLLong from 'graphql-type-long'
-import { getTokens, addToken, favoriteToken } from '@/services/token'
+import {
+  getTokens,
+  addToken,
+  favoriteToken,
+  getHighestSalesInfo,
+} from '@/services/token'
 
 export const tokenResolver: IResolvers = {
   Query: {
@@ -10,6 +15,11 @@ export const tokenResolver: IResolvers = {
       const { where, page, limit } = args
 
       return await getTokens({ where, page, limit })
+    },
+    async getHighestSalesInfo(_: any, args: any) {
+      const { slug, tokenId } = args.where
+      const result = await getHighestSalesInfo(slug, tokenId)
+      return { result }
     },
   },
   Mutation: {

@@ -63,8 +63,25 @@ input GetTokensInput {
   price: PriceInput
 }
 
+type SalesInfo {
+  payToken: String
+  price: String!
+}
+
+type GetHighestSalesInfoResponse {
+  result: [SalesInfo!]!
+}
+
+input GetHighestSalesInfoInput {
+  slug: String!
+  tokenId: String!
+}
+
 type Query {
   getTokens(where: GetTokensInput!, page: Int, limit: Int): GetTokensResponse
+  getHighestSalesInfo(
+    where: GetHighestSalesInfoInput!
+  ): GetHighestSalesInfoResponse
 }
 
 type TokenResponse {

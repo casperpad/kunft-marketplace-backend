@@ -19,7 +19,10 @@ const NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH =
 
 const MONGODB_URL = process.env.MONGODB_URL!
 const REDIS_URL = process.env.REDIS_URL!
-const NODE_ENV = process.env.NODE_ENV as 'development' | 'production'
+const NODE_ENV = (process.env.NODE_ENV || 'development') as
+  | 'development'
+  | 'production'
+
 const APP_ENV = NODE_ENV
 
 const JWT_SECRET =
