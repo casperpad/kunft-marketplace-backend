@@ -8,6 +8,7 @@ pipeline {
     stages {
         stage('Install pnpm') { 
             steps {
+                sh 'sudo chown -R 114:121 \"/.npm\"'
                 sh 'npm install -g pnpm'
             }
         }
