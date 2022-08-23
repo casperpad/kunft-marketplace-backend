@@ -5,10 +5,12 @@ pipeline {
             args '-p 8000:8000' 
         }
     }
+    environment {
+        HOME = '.'
+    }
     stages {
         stage('Install pnpm') { 
             steps {
-                sh 'sudo chown -R 114:121 \"/.npm\"'
                 sh 'npm install -g pnpm'
             }
         }
