@@ -5,7 +5,7 @@ FROM nikolaik/python-nodejs:latest
 WORKDIR /usr/app
 
 COPY package.json ./
-COPY pnpm-lock.yaml ./
+COPY yarn.lock ./
 
 RUN [ "yarn" ]
 
