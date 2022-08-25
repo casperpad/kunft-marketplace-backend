@@ -1,7 +1,6 @@
 version: '3.7'
 
 services:
-  #backend
   kunft:
     build:
       context: .
@@ -9,7 +8,7 @@ services:
     env_file:
       - ./.env
     restart: always
-    command: pnpm start
+    command: yarn start
     volumes:
       - .:/usr/app
       - /usr/app/node_modules
