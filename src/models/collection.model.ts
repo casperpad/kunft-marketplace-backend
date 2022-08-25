@@ -29,7 +29,7 @@ const CollectionSchema = new Schema({
   description: { type: String },
   verified: { type: Boolean, required: true, default: false },
   promoted: { type: Boolean, required: true, default: false },
-  image: { type: String },
+  background: { type: String },
   logo: { type: String },
   twitter: { type: String },
   discord: { type: String },

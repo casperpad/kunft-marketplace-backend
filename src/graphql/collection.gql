@@ -7,7 +7,7 @@ type Collection {
   description: String
   verified: Boolean!
   promoted: Boolean!
-  image: String
+  background: String
   logo: String
   twitter: String
   discord: String
@@ -54,8 +54,10 @@ type Mutation {
     description: String
     verified: Boolean!
     promoted: Boolean
+    collection: String
     image: String
     twitter: String
     discord: String
+    website: String
   ): Collection
 }
