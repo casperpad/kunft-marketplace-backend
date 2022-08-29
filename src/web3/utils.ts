@@ -101,7 +101,7 @@ export const getContractHashFromContractPackageHash = async (
     `hash-${contractPackageHash!}`,
     [],
   )
-  return ContractPackage!.versions.pop()!.contractHash
+  return ContractPackage!.versions.pop()!.contractHash.slice(9)
 }
 
 /**

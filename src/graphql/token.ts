@@ -24,9 +24,9 @@ export const tokenResolver: IResolvers = {
       // const token = await addToken(contractHash, tokenId)
       // return { token }
     },
-    // TODO ADD Authentication
-    async favoriteToken(_: any, args: any) {
+    async favoriteToken(_: any, args: any, ctx: any) {
       const { slug, tokenId, publicKey } = args
+      console.log(ctx.user)
       const token = await favoriteToken(slug, tokenId, publicKey)
       return { token }
     },

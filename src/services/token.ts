@@ -68,7 +68,6 @@ export const getTokens = async ({
         casperClient,
         collectionDB.contractPackageHash,
       )
-      console.log(contractHash)
       client.setContractHash(`hash-${contractHash}`)
 
       const owner = await client.getOwnerOf(tokenId)

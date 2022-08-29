@@ -2,22 +2,28 @@ import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader'
 import { loadSchemaSync } from '@graphql-tools/load'
 import { mergeResolvers } from '@graphql-tools/merge'
 import { addResolversToSchema } from '@graphql-tools/schema'
+import { applyMiddleware } from 'graphql-middleware'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
 import { ApolloServerExpressConfig } from 'apollo-server-express'
-import jwt from 'jsonwebtoken'
 
-import { JWT_NAME, JWT_SECRET } from '@/config'
+import { JWT_NAME } from '@/config'
 import { collectionResolver } from './collection'
 import { tokenResolver } from './token'
+import { decodeJwtToken } from '@/services/auth'
+import permissions from './permissions'
 
-const schema = loadSchemaSync('./src/graphql/*.gql', {
-  loaders: [new GraphQLFileLoader()],
-})
+const schema = applyMiddleware(
+  loadSchemaSync('./src/graphql/*.gql', {
+    loaders: [new GraphQLFileLoader()],
+  }),
+  permissions,
+)
 
 const resolvers = mergeResolvers([collectionResolver, tokenResolver])
 const config: ApolloServerExpressConfig = {
   schema: addResolversToSchema({ schema, resolvers }),
   plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
+
   context: ({ req }) => {
     try {
       // Note: This example uses the `req` argument to access headers,
@@ -29,12 +35,17 @@ const config: ApolloServerExpressConfig = {
 
       // Get the user token from the headers.
       const token = req.cookies[JWT_NAME]
-      // Try to retrieve a user with the token
-      const user = jwt.verify(token, JWT_SECRET)
-      // Add the user to the context
-      return { user }
+      if (token) {
+        // Try to retrieve a user with the token
+
+        const user = decodeJwtToken(token)
+        console.log(user)
+        // Add the user to the context
+        return { ...req, user }
+      }
+      return { ...req, user: null }
     } catch (error: any) {
-      return {}
+      return { ...req, user: null }
     }
   },
 }

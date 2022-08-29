@@ -6,11 +6,12 @@ import {
 import Chance from 'chance'
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
-import { sign as signJwt } from 'jsonwebtoken'
-import { JWT_SECRET, JWT_EXPIRE, JWT_NAME } from '@/config'
+
+import { JWT_EXPIRE, JWT_NAME } from '@/config'
 import { User } from '@/models/user.model'
 import { ApiError } from '@/utils'
 import catchAsync from '@/utils/catchAsync'
+import { generateJwtToken } from '@/services/auth'
 
 export const generateNonce = () => {
   const chance = new Chance()
@@ -23,7 +24,6 @@ export const checkAuth = catchAsync(
   async (req: express.Request, res: express.Response) => {
     try {
       const { publicKey } = req.params
-      // @ts-ignore
       const nonce = await User.getNonce(publicKey)
       if (nonce === undefined) throw Error(`Not exist user ${publicKey}`)
 
@@ -77,9 +77,7 @@ export const signUp = catchAsync(
 
     const signObject = user.toJSON()
 
-    const token = signJwt(signObject, JWT_SECRET, {
-      expiresIn: JWT_EXPIRE,
-    })
+    const token = generateJwtToken(signObject)
 
     res.cookie(JWT_NAME, token, {
       maxAge: JWT_EXPIRE * 1000,
@@ -119,9 +117,7 @@ export const signIn = catchAsync(
 
     const signObject = user.toJSON()
 
-    const token = signJwt(signObject, JWT_SECRET, {
-      expiresIn: JWT_EXPIRE,
-    })
+    const token = generateJwtToken(signObject)
 
     res.cookie(JWT_NAME, token, {
       maxAge: JWT_EXPIRE * 1000,

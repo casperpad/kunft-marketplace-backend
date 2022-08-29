@@ -48,6 +48,8 @@
     "graphql": "^16.5.0",
     "graphql-date": "^1.0.3",
     "graphql-depth-limit": "^1.1.0",
+    "graphql-middleware": "^6.1.32",
+    "graphql-shield": "^7.5.0",
     "graphql-type-long": "^0.1.1",
     "http-status-codes": "^2.2.0",
     "husky": "^8.0.1",
