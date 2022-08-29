@@ -53,7 +53,7 @@ export const signUp = catchAsync(
   async (req: express.Request, res: express.Response) => {
     const { publicKey: publicKeyString, signature: signatureString } = req.body
     const publicKey = CLPublicKey.fromHex(publicKeyString)
-    // @ts-ignore
+
     let user = await User.findByPublicKey(publicKey.toHex())
 
     if (user) {

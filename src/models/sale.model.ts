@@ -1,7 +1,7 @@
 import mongoose, { Schema } from 'mongoose'
-import { SaleSchema } from '../interfaces/mongoose.gen'
+import { SaleSchema, SaleDocument, SaleModel } from '@/interfaces/mongoose.gen'
 
-const SaleSchema = new Schema(
+const SaleSchema: SaleSchema = new Schema(
   {
     creator: {
       type: String,
@@ -35,8 +35,14 @@ const SaleSchema = new Schema(
       default: 'pending',
       required: true,
     },
+    pendingDeployHash: {
+      type: String,
+      required: true,
+    },
+    succeedDeployHash: String,
+    canceledDeployHash: String,
   },
   { timestamps: true },
 )
 
-export const Sale = mongoose.model('Sale', SaleSchema)
+export const Sale = mongoose.model<SaleDocument, SaleModel>('Sale', SaleSchema)

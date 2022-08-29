@@ -76,10 +76,18 @@ export const MarketplaceEventParser = (
             event &&
             eventNames.includes(event.value())
           ) {
-            acc = [...acc, { name: event.value(), clValue }]
+            acc = [
+              ...acc,
+              {
+                name: event.value(),
+                clValue,
+                deployHash: value.body.DeployProcessed.deploy_hash,
+              },
+            ]
           }
         }
       }
+
       return acc
     }, [])
 

@@ -1,11 +1,13 @@
 import { CEP47Client } from 'casper-cep47-js-client'
 import { Collection } from '@/models/collection.model'
-
+import 'mongoose-aggregate-paginate-v2'
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
 } from '../config'
 import { PipelineStage } from 'mongoose'
+import { getContractHashFromContractPackageHash } from '@/web3/utils'
+import { CasperClient } from 'casper-js-sdk'
 
 // {
 //   $search: {
@@ -110,7 +112,6 @@ export const getCollectionSlugs = async () => {
 
 export const addCollection = async (
   contractPackageHash: string,
-  contractHash: string,
   verified: boolean,
   promoted: boolean,
   slug?: string,
@@ -124,12 +125,16 @@ export const addCollection = async (
     NEXT_PUBLIC_CASPER_NODE_ADDRESS!,
     NEXT_PUBLIC_CASPER_CHAIN_NAME!,
   )
+  const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
+  const contractHash = await getContractHashFromContractPackageHash(
+    casperClient,
+    contractPackageHash,
+  )
   cep47Client.setContractHash(`hash-${contractHash}`)
   const name = await cep47Client.name()
   const symbol = await cep47Client.symbol()
   const collectionDB = new Collection({
     contractPackageHash,
-    contractHash,
     slug: slug || contractPackageHash,
     name,
     symbol,
@@ -143,4 +148,23 @@ export const addCollection = async (
   })
   await collectionDB.save()
   return collectionDB
+}
+
+export async function getCollectionOrCreate(contractPackageHash: string) {
+  let collectionNFT = await Collection.findOne({ contractPackageHash })
+  if (collectionNFT === null) {
+    const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
+    const stateRootHash = await casperClient.nodeClient.getStateRootHash()
+    const { ContractPackage } = await casperClient.nodeClient.getBlockState(
+      stateRootHash,
+      `hash-${contractPackageHash!}`,
+      [],
+    )
+
+    const contractHash = ContractPackage?.versions.pop()?.contractHash
+
+    if (!contractHash) return false
+    collectionNFT = await addCollection(contractPackageHash, false, false)
+  }
+  return collectionNFT
 }

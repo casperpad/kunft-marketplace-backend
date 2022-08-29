@@ -5,7 +5,101 @@
 
 // NOTE: ANY CHANGES MADE WILL BE OVERWRITTEN ON SUBSEQUENT EXECUTIONS OF MONGOOSE-TSGEN.
 
-import mongoose from 'mongoose'
+import mongoose, { HydratedDocument } from 'mongoose'
+
+/**
+ * Lean version of CasperDocument
+ *
+ * This has all Mongoose getters & functions removed. This type will be returned from `CasperDocument.toObject()`. To avoid conflicts with model names, use the type alias `CasperObject`.
+ * ```
+ * const casperObject = casper.toObject();
+ * ```
+ */
+export type Casper = {
+  lasteEventId: string
+  reason?: string
+  _id: mongoose.Types.ObjectId
+  updatedAt?: Date
+  createdAt?: Date
+}
+
+/**
+ * Lean version of CasperDocument (type alias of `Casper`)
+ *
+ * Use this type alias to avoid conflicts with model names:
+ * ```
+ * import { Casper } from "../models"
+ * import { CasperObject } from "../interfaces/mongoose.gen.ts"
+ *
+ * const casperObject: CasperObject = casper.toObject();
+ * ```
+ */
+export type CasperObject = Casper
+
+/**
+ * Mongoose Query type
+ *
+ * This type is returned from query functions. For most use cases, you should not need to use this type explicitly.
+ */
+export type CasperQuery = mongoose.Query<any, CasperDocument, CasperQueries> &
+  CasperQueries
+
+/**
+ * Mongoose Query helper types
+ *
+ * This type represents `CasperSchema.query`. For most use cases, you should not need to use this type explicitly.
+ */
+export type CasperQueries = {}
+
+export type CasperMethods = {}
+
+export type CasperStatics = {}
+
+/**
+ * Mongoose Model type
+ *
+ * Pass this type to the Mongoose Model constructor:
+ * ```
+ * const Casper = mongoose.model<CasperDocument, CasperModel>("Casper", CasperSchema);
+ * ```
+ */
+export type CasperModel = mongoose.Model<CasperDocument, CasperQueries> &
+  CasperStatics
+
+/**
+ * Mongoose Schema type
+ *
+ * Assign this type to new Casper schema instances:
+ * ```
+ * const CasperSchema: CasperSchema = new mongoose.Schema({ ... })
+ * ```
+ */
+export type CasperSchema = mongoose.Schema<
+  CasperDocument,
+  CasperModel,
+  CasperMethods,
+  CasperQueries
+>
+
+/**
+ * Mongoose Document type
+ *
+ * Pass this type to the Mongoose Model constructor:
+ * ```
+ * const Casper = mongoose.model<CasperDocument, CasperModel>("Casper", CasperSchema);
+ * ```
+ */
+export type CasperDocument = mongoose.Document<
+  mongoose.Types.ObjectId,
+  CasperQueries
+> &
+  CasperMethods & {
+    lasteEventId: string
+    reason?: string
+    _id: mongoose.Types.ObjectId
+    updatedAt?: Date
+    createdAt?: Date
+  }
 
 /**
  * Lean version of CollectionDocument
@@ -17,7 +111,6 @@ import mongoose from 'mongoose'
  */
 export type Collection = {
   contractPackageHash: string
-  contractHash: string
   slug: string
   deployer?: string
   symbol: string
@@ -25,7 +118,8 @@ export type Collection = {
   description?: string
   verified: boolean
   promoted: boolean
-  image?: string
+  background?: string
+  logo?: string
   twitter?: string
   discord?: string
   website?: string
@@ -113,7 +207,6 @@ export type CollectionDocument = mongoose.Document<
 > &
   CollectionMethods & {
     contractPackageHash: string
-    contractHash: string
     slug: string
     deployer?: string
     symbol: string
@@ -121,7 +214,8 @@ export type CollectionDocument = mongoose.Document<
     description?: string
     verified: boolean
     promoted: boolean
-    image?: string
+    background?: string
+    logo?: string
     twitter?: string
     discord?: string
     website?: string
@@ -144,7 +238,7 @@ export type Offer = {
   startTime: number
   owner?: string
   additionalRecipient?: string
-  status: 'pending' | 'suceed' | 'canceled'
+  status: 'pending' | 'succeed' | 'canceled'
   _id: mongoose.Types.ObjectId
   updatedAt?: Date
   createdAt?: Date
@@ -228,7 +322,7 @@ export type OfferDocument = mongoose.Document<
     startTime: number
     owner?: string
     additionalRecipient?: string
-    status: 'pending' | 'suceed' | 'canceled'
+    status: 'pending' | 'succeed' | 'canceled'
     _id: mongoose.Types.ObjectId
     updatedAt?: Date
     createdAt?: Date
@@ -250,7 +344,10 @@ export type Sale = {
   price: string
   startTime: number
   additionalRecipient?: string
-  status: 'pending' | 'suceed' | 'canceled'
+  status: 'pending' | 'succeed' | 'canceled'
+  pendingDeployHash: string
+  succeedDeployHash?: string
+  canceledDeployHash?: string
   _id: mongoose.Types.ObjectId
   updatedAt?: Date
   createdAt?: Date
@@ -333,7 +430,10 @@ export type SaleDocument = mongoose.Document<
     price: string
     startTime: number
     additionalRecipient?: string
-    status: 'pending' | 'suceed' | 'canceled'
+    status: 'pending' | 'succeed' | 'canceled'
+    pendingDeployHash: string
+    succeedDeployHash?: string
+    canceledDeployHash?: string
     _id: mongoose.Types.ObjectId
     updatedAt?: Date
     createdAt?: Date
@@ -457,13 +557,15 @@ export type TokenDocument = mongoose.Document<
  * ```
  */
 export type User = {
+  publicKey: string
+  verified: boolean
   firstName?: string
   lastName?: string
-  nonce: string
-  publicKey: string
+  avatar?: string
+  description?: string
   email?: string
   emailVerified?: boolean
-  verified: boolean
+  nonce: string
   role?: 'user' | 'admin'
   _id: mongoose.Types.ObjectId
 }
@@ -496,7 +598,9 @@ export type UserQuery = mongoose.Query<any, UserDocument, UserQueries> &
  */
 export type UserQueries = {}
 
-export type UserMethods = {}
+export type UserMethods = {
+  toJSON: (this: UserDocument, ...args: any[]) => any
+}
 
 export type UserStatics = {
   getNonce: (this: UserModel, publicKey: string) => Promise<string | undefined>
@@ -544,13 +648,15 @@ export type UserDocument = mongoose.Document<
   UserQueries
 > &
   UserMethods & {
+    publicKey: string
+    verified: boolean
     firstName?: string
     lastName?: string
-    nonce: string
-    publicKey: string
+    avatar?: string
+    description?: string
     email?: string
     emailVerified?: boolean
-    verified: boolean
+    nonce: string
     role?: 'user' | 'admin'
     _id: mongoose.Types.ObjectId
     name: string

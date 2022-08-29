@@ -78,6 +78,32 @@ export const getAccountInfo = async (
   return accountInfo!
 }
 
+export const getContractPackageHashFromContractHash = async (
+  client: CasperClient,
+  contractHash: string,
+) => {
+  const stateRootHash = await client.nodeClient.getStateRootHash()
+  const { Contract } = await client.nodeClient.getBlockState(
+    stateRootHash,
+    `hash-${contractHash!}`,
+    [],
+  )
+  return Contract!.contractPackageHash.slice(21)
+}
+
+export const getContractHashFromContractPackageHash = async (
+  client: CasperClient,
+  contractPackageHash: string,
+) => {
+  const stateRootHash = await client.nodeClient.getStateRootHash()
+  const { ContractPackage } = await client.nodeClient.getBlockState(
+    stateRootHash,
+    `hash-${contractPackageHash!}`,
+    [],
+  )
+  return ContractPackage!.versions.pop()!.contractHash
+}
+
 /**
  * Returns a value under an on-chain account's storage.
  * @param {CasperClient} client - JS SDK client for interacting with a node.

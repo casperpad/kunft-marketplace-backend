@@ -1,5 +1,4 @@
 import axios from 'axios'
-import { CasperClient } from 'casper-js-sdk'
 import { CEP47Client } from 'casper-cep47-js-client'
 import { StatusCodes } from 'http-status-codes'
 import random from 'lodash/random'
@@ -12,7 +11,9 @@ import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
 } from '../config'
-import { addCollection } from './collection'
+import { getCollectionOrCreate } from './collection'
+import { getContractHashFromContractPackageHash } from '@/web3/utils'
+import { CasperClient } from 'casper-js-sdk'
 
 interface MetadataInput {
   [key: string]: string[]
@@ -62,7 +63,13 @@ export const getTokens = async ({
         NEXT_PUBLIC_CASPER_NODE_ADDRESS,
         NEXT_PUBLIC_CASPER_CHAIN_NAME,
       )
-      client.setContractHash(`hash-${collectionDB.contractHash}`)
+      const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
+      const contractHash = await getContractHashFromContractPackageHash(
+        casperClient,
+        collectionDB.contractPackageHash,
+      )
+      console.log(contractHash)
+      client.setContractHash(`hash-${contractHash}`)
 
       const owner = await client.getOwnerOf(tokenId)
       await Token.findOneAndUpdate(
@@ -442,63 +449,6 @@ export const getTokens = async ({
 }
 
 /**
- * @deprecated
- * Use _addToken function
- * Add token by `contractHash` and `tokenId`
- * @param contractHash CEP47 contract hash
- * @param tokenId token id
- * @returns Token
- */
-export const addToken = async (contractHash: string, tokenId: string) => {
-  const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
-  const stateRootHash = await casperClient.nodeClient.getStateRootHash()
-  const { Contract } = await casperClient.nodeClient.getBlockState(
-    stateRootHash,
-    `hash-${contractHash!}`,
-    [],
-  )
-  const contractPackageHash = Contract?.contractPackageHash.slice(21)
-
-  if (!contractPackageHash)
-    throw new ApiError(StatusCodes.NOT_FOUND, `Not found contractPackageHash`)
-
-  let collectionNFT = await Collection.findOne({ contractPackageHash })
-  if (collectionNFT === null) {
-    collectionNFT = await addCollection(
-      contractPackageHash,
-      contractHash,
-      false,
-      false,
-    )
-  }
-
-  const cep47Client = new CEP47Client(
-    NEXT_PUBLIC_CASPER_NODE_ADDRESS!,
-    NEXT_PUBLIC_CASPER_CHAIN_NAME!,
-  )
-  cep47Client.setContractHash(`hash-${contractHash}`)
-  const metadata = await cep47Client.getTokenMeta(tokenId)
-  const owner = (await cep47Client.getOwnerOf(tokenId)).slice(13)
-  await Token.findOneAndUpdate(
-    { collectionNFT, tokenId },
-    {
-      collectionNFT,
-      tokenId,
-      metadata,
-      owner,
-    },
-    {
-      upsert: true,
-      new: true,
-    },
-  )
-  const token = (
-    (await getTokens({ where: { slug: collectionNFT.slug, tokenId } })) as any
-  ).tokens[0]
-  return token
-}
-
-/**
  * Favorite given token and returns updated token
  * @param slug Identifier of collection
  * @param tokenId token id
@@ -515,12 +465,14 @@ export const favoriteToken = async (
   if (collectionNFT === null) throw Error(`Not exist ${slug}`)
 
   let token = await Token.findOne({ collectionNFT, tokenId })
-
+  if (token === null) throw new ApiError(404, `Not exist ${slug}-${tokenId}`)
   const user = await User.findOne({ publicKey })
+  if (user === null) throw new ApiError(404, `Not exist user ${publicKey}`)
 
   if (
     token.favoritedUsers.find((u: any) => u.toString() === user._id.toString())
   )
+    // @ts-ignore
     token.favoritedUsers = token.favoritedUsers.filter(
       (u: any) => u.toString() !== user._id.toString(),
     )
@@ -564,32 +516,13 @@ export const addUserToken = async (accountHash: string) => {
   return added
 }
 
-const _addToken = async (
+export const _addToken = async (
   contractPackageHash: string,
   tokenId: string,
   metadata: any,
   owner: string,
 ): Promise<boolean> => {
-  let collectionNFT = await Collection.findOne({ contractPackageHash })
-  if (collectionNFT === null) {
-    const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
-    const stateRootHash = await casperClient.nodeClient.getStateRootHash()
-    const { ContractPackage } = await casperClient.nodeClient.getBlockState(
-      stateRootHash,
-      `hash-${contractPackageHash!}`,
-      [],
-    )
-
-    const contractHash = ContractPackage?.versions.pop()?.contractHash
-
-    if (!contractHash) return false
-    collectionNFT = await addCollection(
-      contractPackageHash,
-      contractHash.slice(9),
-      false,
-      false,
-    )
-  }
+  const collectionNFT = await getCollectionOrCreate(contractPackageHash)
 
   await Token.findOneAndUpdate(
     { collectionNFT, tokenId },
