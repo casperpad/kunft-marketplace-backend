@@ -15,6 +15,7 @@ export const auth = (
   }
   try {
     const decoded = decodeJwtToken(token)
+    // @ts-ignore
     // eslint-disable-next-line no-param-reassign
     req.headers.user = decoded
     next()
