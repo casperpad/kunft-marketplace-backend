@@ -39,7 +39,6 @@ const config: ApolloServerExpressConfig = {
         // Try to retrieve a user with the token
 
         const user = decodeJwtToken(token)
-        console.log(user)
         // Add the user to the context
         return { ...req, user }
       }

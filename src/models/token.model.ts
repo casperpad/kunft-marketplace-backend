@@ -1,6 +1,6 @@
 import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
-import { TokenSchema, TokenDocument } from '@/interfaces/mongoose.gen'
+import { TokenDocument } from '@/interfaces/mongoose.gen'
 
 const TokenSchema = new Schema({
   collectionNFT: {
@@ -28,6 +28,7 @@ const TokenSchema = new Schema({
   // account hash hex string (not formatted)
   owner: {
     type: String,
+    required: true,
   },
 })
 

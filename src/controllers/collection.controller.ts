@@ -11,6 +11,7 @@ export const getCollections = async (
   // if (existCollection) {
   //   return res.json(JSON.parse(existCollection))
   // }
+  //
 
   // @ts-ignore
   const { query, page, limit } = req.query as any

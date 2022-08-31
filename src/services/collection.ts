@@ -1,13 +1,17 @@
+import { CasperClient } from 'casper-js-sdk'
 import { CEP47Client } from 'casper-cep47-js-client'
-import { Collection } from '@/models/collection.model'
+import { StatusCodes } from 'http-status-codes'
+import { PipelineStage } from 'mongoose'
 import 'mongoose-aggregate-paginate-v2'
+
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
-} from '../config'
-import { PipelineStage } from 'mongoose'
+} from '@/config'
+import { Collection } from '@/models/collection.model'
 import { getContractHashFromContractPackageHash } from '@/web3/utils'
-import { CasperClient } from 'casper-js-sdk'
+import { CollectionDocument } from '@/interfaces/mongoose.gen'
+import { ApiError } from '@/utils'
 
 // {
 //   $search: {
@@ -120,7 +124,7 @@ export const addCollection = async (
   twitter?: string,
   discord?: string,
   website?: string,
-) => {
+): Promise<CollectionDocument> => {
   const cep47Client = new CEP47Client(
     NEXT_PUBLIC_CASPER_NODE_ADDRESS!,
     NEXT_PUBLIC_CASPER_CHAIN_NAME!,
@@ -150,7 +154,9 @@ export const addCollection = async (
   return collectionDB
 }
 
-export async function getCollectionOrCreate(contractPackageHash: string) {
+export async function getCollectionOrCreate(
+  contractPackageHash: string,
+): Promise<CollectionDocument> {
   let collectionNFT = await Collection.findOne({ contractPackageHash })
   if (collectionNFT === null) {
     const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
@@ -163,7 +169,11 @@ export async function getCollectionOrCreate(contractPackageHash: string) {
 
     const contractHash = ContractPackage?.versions.pop()?.contractHash
 
-    if (!contractHash) return false
+    if (!contractHash)
+      throw new ApiError(
+        StatusCodes.BAD_REQUEST,
+        'Invalid Contract Package Hash',
+      )
     collectionNFT = await addCollection(contractPackageHash, false, false)
   }
   return collectionNFT

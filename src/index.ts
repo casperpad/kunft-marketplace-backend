@@ -78,7 +78,7 @@ async function startServer() {
 
   server.listen(PORT, () => {
     try {
-      startMarketplaceEventStream()
+      // startMarketplaceEventStream()
     } catch (err: any) {
       console.error(`***Marketplace EventStream Error***`)
       console.error(err)

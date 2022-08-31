@@ -1,10 +1,6 @@
 import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
-import {
-  CollectionSchema,
-  CollectionDocument,
-  CollectionModel,
-} from '@/interfaces/mongoose.gen'
+import { CollectionDocument, CollectionModel } from '@/interfaces/mongoose.gen'
 
 const CollectionSchema = new Schema({
   contractPackageHash: {

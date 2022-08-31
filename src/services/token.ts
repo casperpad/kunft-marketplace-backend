@@ -1,11 +1,12 @@
 import axios from 'axios'
+import { CasperClient } from 'casper-js-sdk'
 import { CEP47Client } from 'casper-cep47-js-client'
 import { StatusCodes } from 'http-status-codes'
 import random from 'lodash/random'
 import forIn from 'lodash/forIn'
 import { PipelineStage } from 'mongoose'
 import { ApiError } from '@/utils'
-import { Token, Collection, User, Sale } from '@/models'
+import { Token, Collection, User, Sale, Offer } from '@/models'
 import { MakeServices } from '@/types'
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
@@ -13,7 +14,7 @@ import {
 } from '../config'
 import { getCollectionOrCreate } from './collection'
 import { getContractHashFromContractPackageHash } from '@/web3/utils'
-import { CasperClient } from 'casper-js-sdk'
+import { CollectionDocument, TokenDocument } from '@/interfaces/mongoose.gen'
 
 interface MetadataInput {
   [key: string]: string[]
@@ -33,6 +34,10 @@ interface GetTokensInput {
   listed?: boolean
   metadata?: MetadataInput
   price?: PriceInput
+}
+
+interface Metadata {
+  [key: string]: string | number
 }
 
 export const getTokens = async ({
@@ -498,7 +503,7 @@ export const addUserToken = async (accountHash: string) => {
         metadata[meta.key] = meta.value
       })
 
-      const result = await _addToken(
+      const result = await addTokenByContractPackageHash(
         token.contract_package_hash,
         token.token_id,
         metadata,
@@ -515,10 +520,10 @@ export const addUserToken = async (accountHash: string) => {
   return added
 }
 
-export const _addToken = async (
+export const addTokenByContractPackageHash = async (
   contractPackageHash: string,
   tokenId: string,
-  metadata: any,
+  metadata: Metadata,
   owner: string,
 ): Promise<boolean> => {
   const collectionNFT = await getCollectionOrCreate(contractPackageHash)
@@ -538,6 +543,76 @@ export const _addToken = async (
   )
 
   return true
+}
+
+export const addTokenByCollectionDocument = async (
+  collectionNFT: CollectionDocument,
+  tokenId: string,
+  metadata: Metadata,
+  owner: string,
+): Promise<TokenDocument> => {
+  return await Token.findOneAndUpdate(
+    { collectionNFT, tokenId },
+    {
+      collectionNFT,
+      tokenId,
+      metadata,
+      owner,
+    },
+    {
+      upsert: true,
+      new: true,
+    },
+  )
+}
+
+export const getTokenOrCreate = async (
+  collectionNFT: CollectionDocument,
+  tokenId: string,
+): Promise<TokenDocument> => {
+  const cep47Client = new CEP47Client(
+    NEXT_PUBLIC_CASPER_NODE_ADDRESS,
+    NEXT_PUBLIC_CASPER_CHAIN_NAME,
+  )
+  const casperClient = new CasperClient(NEXT_PUBLIC_CASPER_NODE_ADDRESS)
+  const contractHash = await getContractHashFromContractPackageHash(
+    casperClient,
+    collectionNFT.contractPackageHash,
+  )
+  cep47Client.setContractHash(`hash-${contractHash}`)
+
+  const token_owner = await cep47Client.getOwnerOf(tokenId)
+  let token = await Token.findOneAndUpdate(
+    {
+      collectionNFT,
+      tokenId,
+    },
+    { owner: token_owner.slice(13) },
+    { new: true },
+  )
+  if (token === null) {
+    const tokenMeta: Map<string, string> = await cep47Client.getTokenMeta(
+      tokenId,
+    )
+    const metadataArray = Array.from(tokenMeta.entries()).map((t) => {
+      return {
+        key: t[0],
+        value: t[1],
+      }
+    })
+    const metadata = {} as any
+    metadataArray.forEach((meta) => {
+      metadata[meta.key] = meta.value
+    })
+    token = new Token({
+      collectionNFT,
+      tokenId,
+      owner: token_owner.slice(13),
+      metadata,
+    })
+    await token.save()
+  }
+  return token
 }
 
 export const getHighestSalesInfo = async (slug: string, tokenId: string) => {
@@ -613,4 +688,118 @@ export const getHighestSalesInfo = async (slug: string, tokenId: string) => {
   const highestSale = await Sale.aggregate(pipeline)
   if (highestSale.length !== 1) return null
   return highestSale[0].highestSale
+}
+
+export const getSalesInfo = async (
+  slug: string,
+  tokenId: string,
+  page = 1,
+  limit = 20,
+) => {
+  const collectionNFT = await Collection.findOne({ slug })
+  if (collectionNFT === null)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Not found collection')
+  const token = await Token.findOne({ collectionNFT, tokenId })
+  if (token === null)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Not found token')
+
+  const pipeline: PipelineStage[] = []
+
+  pipeline.push({
+    $match: {
+      token: token._id,
+    },
+  })
+  pipeline.push({
+    $project: {
+      _id: 0,
+      __v: 0,
+    },
+  })
+  pipeline.push({
+    $sort: {
+      createdAt: -1,
+    },
+  })
+
+  const customLabels = {
+    totalDocs: 'total',
+    docs: 'sales',
+    limit: 'limit',
+    page: 'currentPage',
+    nextPage: 'nextPage',
+    prevPage: 'prevPage',
+    totalPages: 'totalPages',
+    hasPrevPage: 'hasPrev',
+    hasNextPage: 'hasNext',
+    pagingCounter: 'pageCounter',
+    meta: 'paginationInfo',
+  }
+  const options = {
+    page,
+    limit,
+    customLabels,
+  }
+
+  const aggregate = Sale.aggregate(pipeline)
+  const sales = await Sale.aggregatePaginate(aggregate, options)
+
+  return sales
+}
+
+export const getOffersInfo = async (
+  slug: string,
+  tokenId: string,
+  page = 1,
+  limit = 20,
+) => {
+  const collectionNFT = await Collection.findOne({ slug })
+  if (collectionNFT === null)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Not found collection')
+  const token = await Token.findOne({ collectionNFT, tokenId })
+  if (token === null)
+    throw new ApiError(StatusCodes.NOT_FOUND, 'Not found token')
+
+  const pipeline: PipelineStage[] = []
+
+  pipeline.push({
+    $match: {
+      token: token._id,
+    },
+  })
+  pipeline.push({
+    $project: {
+      _id: 0,
+      __v: 0,
+    },
+  })
+  pipeline.push({
+    $sort: {
+      createdAt: -1,
+    },
+  })
+
+  const customLabels = {
+    totalDocs: 'total',
+    docs: 'sales',
+    limit: 'limit',
+    page: 'currentPage',
+    nextPage: 'nextPage',
+    prevPage: 'prevPage',
+    totalPages: 'totalPages',
+    hasPrevPage: 'hasPrev',
+    hasNextPage: 'hasNext',
+    pagingCounter: 'pageCounter',
+    meta: 'paginationInfo',
+  }
+  const options = {
+    page,
+    limit,
+    customLabels,
+  }
+
+  const aggregate = Offer.aggregate(pipeline)
+  const sales = await Offer.aggregatePaginate(aggregate, options)
+
+  return sales
 }

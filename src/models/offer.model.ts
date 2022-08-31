@@ -1,5 +1,6 @@
-import mongoose, { Schema } from 'mongoose'
-import { OfferDocument, OfferModel } from '../interfaces/mongoose.gen'
+import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
+import { OfferDocument } from '../interfaces/mongoose.gen'
 import { casperValidation } from '@/validations'
 
 const OfferSchema = new Schema(
@@ -40,8 +41,26 @@ const OfferSchema = new Schema(
       default: 'pending',
       required: true,
     },
+    pendingDeployHash: {
+      type: String,
+      required: true,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
+    },
+    succeedDeployHash: {
+      type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
+    },
+    canceledDeployHash: {
+      type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
+    },
   },
   { timestamps: true },
 )
 
-export const Offer = mongoose.model('Offer', OfferSchema)
+OfferSchema.plugin(mongooseAggregatePaginate)
+
+export const Offer: AggregatePaginateModel<OfferDocument> = mongoose.model(
+  'Offer',
+  OfferSchema,
+)

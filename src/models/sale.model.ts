@@ -1,11 +1,14 @@
-import mongoose, { Schema } from 'mongoose'
-import { SaleSchema, SaleDocument, SaleModel } from '@/interfaces/mongoose.gen'
+import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
+import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
+import { SaleDocument } from '@/interfaces/mongoose.gen'
+import { casperValidation } from '@/validations'
 
-const SaleSchema: SaleSchema = new Schema(
+const SaleSchema = new Schema(
   {
     creator: {
       type: String,
       required: true,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     token: {
       type: Schema.Types.ObjectId,
@@ -14,9 +17,11 @@ const SaleSchema: SaleSchema = new Schema(
     },
     buyer: {
       type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     payToken: {
       type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     price: {
       type: String,
@@ -28,6 +33,7 @@ const SaleSchema: SaleSchema = new Schema(
     },
     additionalRecipient: {
       type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
     status: {
       type: String,
@@ -38,11 +44,23 @@ const SaleSchema: SaleSchema = new Schema(
     pendingDeployHash: {
       type: String,
       required: true,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
     },
-    succeedDeployHash: String,
-    canceledDeployHash: String,
+    succeedDeployHash: {
+      type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
+    },
+    canceledDeployHash: {
+      type: String,
+      validate: [casperValidation.isValidHash, 'Invalid Hash'],
+    },
   },
   { timestamps: true },
 )
 
-export const Sale = mongoose.model<SaleDocument, SaleModel>('Sale', SaleSchema)
+SaleSchema.plugin(mongooseAggregatePaginate)
+
+export const Sale: AggregatePaginateModel<SaleDocument> = mongoose.model(
+  'Sale',
+  SaleSchema,
+)

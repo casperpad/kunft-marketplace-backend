@@ -2,7 +2,7 @@ import express from 'express'
 import {
   getTokens as _getTokens,
   addUserToken as _addUserToken,
-  getHighestSalesInfo as _getHighestSalesInfo,
+  getSalesInfo as getSalesInfo,
 } from '@/services/token'
 import catchAsync from '@/utils/catchAsync'
 import { tokenValidation } from '@/validations'
@@ -39,7 +39,7 @@ export const getHighestSalesInfo = catchAsync(
       tokenValidation.getHighestSalesInfo,
     )
     console.log(slug, tokenId)
-    const result = await _getHighestSalesInfo(slug, tokenId)
+    const result = await getSalesInfo(slug, tokenId)
     res.json({ result })
   },
 )

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node .",
     "build": "tsc && tsc-alias",
-    "dev": "tsnd --respawn -r tsconfig-paths/register src/index.ts",
+    "dev": "ts-node-dev --poll --respawn --transpile-only --no-deps --exit-child --ignore-watch node_modules -r tsconfig-paths/register src/index.ts",
+    "dev1": "nodemon src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky install",
     "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json}\"",
@@ -109,7 +110,10 @@
     "eslint-plugin-promise": "^6.0.0",
     "eslint-plugin-unused-imports": "^2.0.0",
     "lint-staged": "^13.0.3",
+    "nodemon": "^2.0.19",
     "prettier": "^2.7.1",
+    "sucrase": "^3.25.0",
+    "ts-node": "^10.9.1",
     "ts-node-dev": "^2.0.0"
   },
   "engines": {

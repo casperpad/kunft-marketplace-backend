@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import retry from 'async-retry'
-import { CEP47Client } from 'casper-cep47-js-client'
 import {
   CasperClient,
   CLMap,
@@ -9,18 +8,20 @@ import {
   EventName,
   EventStream,
 } from 'casper-js-sdk'
-import { Collection, Offer, Token } from '@/models'
+import { Casper } from '@/models'
 import {
   NEXT_PUBLIC_CASPER_NODE_ADDRESS,
-  NEXT_PUBLIC_CASPER_CHAIN_NAME,
   NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS,
   NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH,
 } from '@/config'
 import { MarketplaceEventParser, MarketplaceEvents } from '../marketplace'
-import { Casper } from '@/models'
-import { addCollection } from '@/services/collection'
 import { getContractPackageHashFromContractHash } from '../utils'
-import { saleServices } from '@/services'
+import {
+  collectionServices,
+  tokenServices,
+  saleServices,
+  offerServices,
+} from '@/services'
 
 export const _startMarketplaceEventStream = async () => {
   try {
@@ -52,6 +53,8 @@ export const _startMarketplaceEventStream = async () => {
             const deployHash = event.deployHash as string
             const eventParams: CLMap<CLString, CLString> = event.clValue
             console.info(`Handling ${eventName} event`)
+
+            // Event params
             const creator = eventParams.get(CLValueBuilder.string('creator'))
             const collection = eventParams.get(
               CLValueBuilder.string('collection'),
@@ -68,59 +71,25 @@ export const _startMarketplaceEventStream = async () => {
               CLValueBuilder.string('additional_recipient'),
             )
 
-            const cep47Client = new CEP47Client(
-              NEXT_PUBLIC_CASPER_NODE_ADDRESS!,
-              NEXT_PUBLIC_CASPER_CHAIN_NAME!,
+            const casperClient = new CasperClient(
+              NEXT_PUBLIC_CASPER_NODE_ADDRESS,
             )
-            let collectionDB = await Collection.findOne({
-              contractHash: collection!.value(),
-            })
-            if (collectionDB === null) {
-              const casperClient = new CasperClient(
-                NEXT_PUBLIC_CASPER_NODE_ADDRESS,
+            const contractPackageHash =
+              await getContractPackageHashFromContractHash(
+                casperClient,
+                collection!.value(),
               )
-              const contractPackageHash =
-                await getContractPackageHashFromContractHash(
-                  casperClient,
-                  collection!.value(),
-                )
-              collectionDB = await addCollection(
-                contractPackageHash,
-                false,
-                false,
-              )
-            }
-            cep47Client.setContractHash(`hash-${collection!.value()}`)
-            const token_owner = await cep47Client.getOwnerOf(tokenId!.value())
-            let token = await Token.findOneAndUpdate(
-              {
-                collectionNFT: collectionDB,
-                tokenId: tokenId!.value(),
-              },
-              { owner: token_owner.slice(13) },
-              { new: true },
+            const collectionDB = await collectionServices.getCollectionOrCreate(
+              contractPackageHash,
             )
-            if (token === null) {
-              console.info(`Adding ${collectionDB.name} #${tokenId!.value()}`)
-              const tokenMeta: Map<string, string> =
-                await cep47Client.getTokenMeta(tokenId!.value())
-              const metadata = Array.from(tokenMeta.entries()).map((t) => {
-                return {
-                  key: t[0],
-                  value: t[1],
-                }
-              })
-              token = new Token({
-                collectionNFT: collectionDB,
-                tokenId: tokenId!.value(),
-                owner: token_owner.slice(13),
-                metadata,
-              })
-              await token.save()
-            }
+
+            const token = await tokenServices.getTokenOrCreate(
+              collectionDB,
+              tokenId!.value(),
+            )
             let formatedCreatorHash = creator!.value()
             formatedCreatorHash = formatedCreatorHash.slice(20).slice(0, -2)
-            // formatedCreatorHash = `account-hash-${formatedCreatorHash}`
+
             switch (eventName) {
               case MarketplaceEvents.SellOrderCreated: {
                 const preferPayToken =
@@ -164,52 +133,43 @@ export const _startMarketplaceEventStream = async () => {
               }
 
               case MarketplaceEvents.BuyOrderCreated: {
-                const buyOrder = new Offer({
-                  creator: formatedCreatorHash,
+                const preferPayToken =
+                  payToken!.value() === 'None' ? undefined : payToken!.value()
+                const preferAdditionalRecipient =
+                  additionalRecipient!.value() === 'None'
+                    ? undefined
+                    : additionalRecipient!.value()
+                await offerServices.onOfferCreated(
+                  formatedCreatorHash,
                   token,
-                  owner: token.owner,
-                  payToken:
-                    payToken!.value() === 'None'
-                      ? undefined
-                      : payToken!.value(),
-                  price: price!.value(),
-                  startTime: startTime!.value(),
-                  additionalRecipient:
-                    additionalRecipient!.value() === 'None'
-                      ? undefined
-                      : additionalRecipient!.value(),
-                  status: 'pending',
-                })
-                await buyOrder.save()
+                  token.owner,
+                  price!.value(),
+                  startTime!.value(),
+                  deployHash,
+                  preferPayToken,
+                  preferAdditionalRecipient,
+                )
+
                 break
               }
               case MarketplaceEvents.BuyOrderCanceled: {
-                Offer.findOneAndUpdate(
-                  {
-                    creator: formatedCreatorHash,
-                    token,
-                    startTime: startTime!.value(),
-                  },
-                  {
-                    status: 'canceled',
-                  },
+                await offerServices.onOfferCanceled(
+                  formatedCreatorHash,
+                  token,
+                  startTime!.value(),
+                  deployHash,
                 )
                 break
               }
               case MarketplaceEvents.BuyOrderAccepted: {
-                await Offer.findOneAndUpdate(
-                  {
-                    creator: formatedCreatorHash,
-                    token,
-                    startTime: startTime!.value(),
-                  },
-                  {
-                    owner: owner!.value(),
-                    status: 'succeed',
-                  },
+                await offerServices.onOfferAccepted(
+                  formatedCreatorHash,
+                  token,
+                  startTime!.value(),
+                  owner!.value(),
+                  deployHash,
                 )
-                token.owner = formatedCreatorHash
-                await token.save()
+
                 break
               }
               default:

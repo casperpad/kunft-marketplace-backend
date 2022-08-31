@@ -5,7 +5,7 @@
 
 // NOTE: ANY CHANGES MADE WILL BE OVERWRITTEN ON SUBSEQUENT EXECUTIONS OF MONGOOSE-TSGEN.
 
-import mongoose, { HydratedDocument } from 'mongoose'
+import mongoose from 'mongoose'
 
 /**
  * Lean version of CasperDocument
@@ -239,6 +239,9 @@ export type Offer = {
   owner?: string
   additionalRecipient?: string
   status: 'pending' | 'succeed' | 'canceled'
+  pendingDeployHash: string
+  succeedDeployHash?: string
+  canceledDeployHash?: string
   _id: mongoose.Types.ObjectId
   updatedAt?: Date
   createdAt?: Date
@@ -274,7 +277,9 @@ export type OfferQueries = {}
 
 export type OfferMethods = {}
 
-export type OfferStatics = {}
+export type OfferStatics = {
+  aggregatePaginate: (this: OfferModel, ...args: any[]) => any
+}
 
 /**
  * Mongoose Model type
@@ -323,6 +328,9 @@ export type OfferDocument = mongoose.Document<
     owner?: string
     additionalRecipient?: string
     status: 'pending' | 'succeed' | 'canceled'
+    pendingDeployHash: string
+    succeedDeployHash?: string
+    canceledDeployHash?: string
     _id: mongoose.Types.ObjectId
     updatedAt?: Date
     createdAt?: Date
@@ -383,7 +391,9 @@ export type SaleQueries = {}
 
 export type SaleMethods = {}
 
-export type SaleStatics = {}
+export type SaleStatics = {
+  aggregatePaginate: (this: SaleModel, ...args: any[]) => any
+}
 
 /**
  * Mongoose Model type
@@ -459,7 +469,7 @@ export type Token = {
   >
   favoritedUsers: (User['_id'] | User)[]
   viewed?: number
-  owner?: string
+  owner: string
   _id: mongoose.Types.ObjectId
 }
 
@@ -544,7 +554,7 @@ export type TokenDocument = mongoose.Document<
     }>
     favoritedUsers: mongoose.Types.Array<UserDocument['_id'] | UserDocument>
     viewed?: number
-    owner?: string
+    owner: string
     _id: mongoose.Types.ObjectId
   }
 
