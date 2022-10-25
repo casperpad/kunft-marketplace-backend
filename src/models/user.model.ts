@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose'
 import validator from 'validator'
+
 import { UserDocument, UserModel } from '@/interfaces/mongoose.gen'
 
 const UserSchema = new Schema({

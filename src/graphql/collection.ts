@@ -1,4 +1,5 @@
 import { IResolvers } from '@graphql-tools/utils'
+
 import { getCollections, getCollectionSlugs } from '@/services/collection'
 
 export const collectionResolver: IResolvers = {

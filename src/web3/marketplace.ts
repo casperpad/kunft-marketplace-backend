@@ -1,23 +1,23 @@
 import { BigNumberish } from '@ethersproject/bignumber'
 import { types } from 'casper-js-client-helper'
 import {
-  CLValue,
-  CLPublicKey,
-  CLMap,
-  RuntimeArgs,
   CasperClient,
-  Contracts,
-  Keys,
   CLKeyParameters,
+  CLKeyType,
+  CLMap,
+  CLPublicKey,
+  CLStringType,
+  CLTypeTag,
+  CLU256Type,
+  CLValue,
   CLValueBuilder,
   CLValueParsers,
-  CLTypeTag,
-  CLStringType,
-  CLKeyType,
-  CLU256Type,
+  Contracts,
   encodeBase16,
+  Keys,
+  RuntimeArgs,
 } from 'casper-js-sdk'
-import { Some, None } from 'ts-results'
+import { None, Some } from 'ts-results'
 
 const { Contract } = Contracts
 type RecipientType = types.RecipientType

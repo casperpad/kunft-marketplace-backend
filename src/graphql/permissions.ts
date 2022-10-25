@@ -1,4 +1,4 @@
-import { rule, shield, and, or, not } from 'graphql-shield'
+import { rule, shield } from 'graphql-shield'
 
 const isAuthenticated = rule({ cache: 'contextual' })(
   async (parent, args, ctx) => {

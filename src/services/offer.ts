@@ -1,5 +1,6 @@
-import { TokenDocument } from '@/interfaces/mongoose.gen'
 import { Offer } from '@/models'
+
+import { TokenDocument } from '@/interfaces/mongoose.gen'
 
 export async function onOfferCreated(
   creator: string,

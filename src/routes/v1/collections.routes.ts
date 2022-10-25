@@ -1,4 +1,5 @@
 import express from 'express'
+
 import { collectionController } from '@/controllers'
 
 const router = express.Router()

@@ -2,7 +2,8 @@ import { IResolvers } from '@graphql-tools/utils'
 import GraphQLDate from 'graphql-date'
 // @ts-ignore
 import GraphQLLong from 'graphql-type-long'
-import { getTokens, favoriteToken, getHighestSalesInfo } from '@/services/token'
+
+import { favoriteToken, getHighestSalesInfo, getTokens } from '@/services/token'
 
 export const tokenResolver: IResolvers = {
   Query: {
@@ -18,7 +19,7 @@ export const tokenResolver: IResolvers = {
     },
   },
   Mutation: {
-    async addToken(_: any, args: any) {
+    async addToken(_: any, __: any) {
       throw Error('Not Implemented')
       // const { contractHash, tokenId } = args
       // const token = await addToken(contractHash, tokenId)

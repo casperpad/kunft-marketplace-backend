@@ -1,4 +1,5 @@
 import express from 'express'
+
 import { getCollections as _getCollections } from '@/services/collection'
 // import redisClient from '@/providers/redis'
 

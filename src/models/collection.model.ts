@@ -1,5 +1,6 @@
-import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
+import mongoose, { AggregatePaginateModel, Schema } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
+
 import { CollectionDocument, CollectionModel } from '@/interfaces/mongoose.gen'
 
 const CollectionSchema = new Schema({

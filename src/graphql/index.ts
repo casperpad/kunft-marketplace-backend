@@ -2,15 +2,17 @@ import { GraphQLFileLoader } from '@graphql-tools/graphql-file-loader'
 import { loadSchemaSync } from '@graphql-tools/load'
 import { mergeResolvers } from '@graphql-tools/merge'
 import { addResolversToSchema } from '@graphql-tools/schema'
-import { applyMiddleware } from 'graphql-middleware'
 import { ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core'
 import { ApolloServerExpressConfig } from 'apollo-server-express'
+import { applyMiddleware } from 'graphql-middleware'
 
 import { JWT_NAME } from '@/config'
-import { collectionResolver } from './collection'
-import { tokenResolver } from './token'
+
 import { decodeJwtToken } from '@/services/auth'
+
+import { collectionResolver } from './collection'
 import permissions from './permissions'
+import { tokenResolver } from './token'
 
 const schema = applyMiddleware(
   loadSchemaSync('./src/graphql/*.gql', {

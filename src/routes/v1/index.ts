@@ -1,5 +1,7 @@
 import express from 'express'
+
 import { APP_ENV } from '@/config'
+
 import authRoutes from './auth.routes'
 import collectionsRoutes from './collections.routes'
 import corsRoutes from './cors.routes'

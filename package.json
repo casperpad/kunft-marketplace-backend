@@ -13,11 +13,12 @@
     "dev1": "nodemon src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prepare": "husky install",
-    "format:check": "prettier --check \"**/*.{js,jsx,ts,tsx,json}\"",
+    "format:check": "prettier --check \"**/*.{js,ts,json}\"",
     "format:check:staged": "lint-staged",
-    "format:write": "prettier --write \"**/*.{js,jsx,ts,tsx,json}\"",
+    "format:write": "prettier --write \"**/*.{js,ts,json}\"",
     "generate:types": "mtgen ./src/models -o ./src/interfaces",
-    "lint": "eslint \"./src\""
+    "lint": "eslint \"./src\"",
+    "lint:write": "eslint --fix \"./src\""
   },
   "dependencies": {
     "@apollo/client": "^3.6.9",
@@ -104,10 +105,12 @@
     "@typescript-eslint/parser": "^5.30.0",
     "commitlint": "^17.0.3",
     "eslint": "^8.18.0",
+    "eslint-config-prettier": "^8.5.0",
     "eslint-config-standard": "^17.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-n": "^15.2.3",
     "eslint-plugin-promise": "^6.0.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
     "eslint-plugin-unused-imports": "^2.0.0",
     "lint-staged": "^13.0.3",
     "nodemon": "^2.0.19",

@@ -1,7 +1,9 @@
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 import passport from 'passport'
+
 import { roleRights } from '@/config/roles'
+
 import { ApiError } from '@/utils'
 
 const verifyCallback =

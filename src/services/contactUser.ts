@@ -1,6 +1,7 @@
-import { NotificationSettings } from '@/types'
 import * as fs from 'fs'
 import nodemailer, { SentMessageInfo } from 'nodemailer'
+
+import { NotificationSettings } from '@/types'
 
 const MAIL_TRANSPORT = process.env.MAIL_TRANSPORT
 const MAIL_FROM = process.env.MAIL_FROM

@@ -3,8 +3,9 @@ import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 
 import { ApiError } from '@/utils'
-import { errorConverter, errorHandler } from '../middlewares/error'
+
 import v1Router from './v1'
+import { errorConverter, errorHandler } from '../middlewares/error'
 
 const router = express.Router()
 

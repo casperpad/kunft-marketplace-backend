@@ -1,7 +1,9 @@
 import Chance from 'chance'
 import { StatusCodes } from 'http-status-codes'
 import jwt, { sign as signJwt } from 'jsonwebtoken'
-import { JWT_SECRET, JWT_EXPIRE } from '@/config'
+
+import { JWT_EXPIRE, JWT_SECRET } from '@/config'
+
 import { ApiError } from '@/utils'
 
 export interface UserSignObject {

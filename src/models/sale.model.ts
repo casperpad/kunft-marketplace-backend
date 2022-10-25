@@ -1,7 +1,9 @@
-import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
+import mongoose, { AggregatePaginateModel, Schema } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
-import { SaleDocument } from '@/interfaces/mongoose.gen'
+
 import { casperValidation } from '@/validations'
+
+import { SaleDocument } from '@/interfaces/mongoose.gen'
 
 const SaleSchema = new Schema(
   {

@@ -1,7 +1,8 @@
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 import Joi from 'joi'
-import { pick, ApiError } from '@/utils'
+
+import { ApiError, pick } from '@/utils'
 
 const validate =
   (schema: object) =>

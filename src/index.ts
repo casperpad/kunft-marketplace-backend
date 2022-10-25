@@ -1,25 +1,21 @@
 import * as Sentry from '@sentry/node'
 import * as Tracing from '@sentry/tracing'
-
 import { ApolloServer } from 'apollo-server-express'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
 import express from 'express'
-
 import mongoose from 'mongoose'
 import morgan from 'morgan'
-
 import responseTime from 'response-time'
 
-import { MONGODB_URL, PORT, SENTRY_DSN, APP_ENV } from '@/config'
-import config from '@/graphql'
+import { APP_ENV, MONGODB_URL, PORT, SENTRY_DSN } from '@/config'
+
 // import redisClient from '@/providers/redis'
 import apiRouter from '@/routes'
+
 import { authLimiter } from './middlewares'
-import {
-  startMarketplaceEventStream,
-  // startCEP47EventStream,
-} from './web3/event'
+
+import config from '@/graphql'
 
 async function startServer() {
   await mongoose.connect(MONGODB_URL).then(() => {

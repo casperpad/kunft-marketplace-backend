@@ -1,12 +1,15 @@
 import express from 'express'
+import Joi from 'joi'
+
+import { tokenValidation } from '@/validations'
+
 import {
-  getTokens as _getTokens,
   addUserToken as _addUserToken,
   getSalesInfo as getSalesInfo,
+  getTokens as _getTokens,
 } from '@/services/token'
+
 import catchAsync from '@/utils/catchAsync'
-import { tokenValidation } from '@/validations'
-import Joi from 'joi'
 
 export const getTokens = catchAsync(
   async (req: express.Request, res: express.Response) => {

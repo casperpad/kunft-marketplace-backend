@@ -1,7 +1,9 @@
 import express from 'express'
-import { addToken } from '@/controllers/user.controller'
-import { validate, auth } from '@/middlewares'
+
 import { userValidation } from '@/validations'
+
+import { addToken } from '@/controllers/user.controller'
+import { auth, validate } from '@/middlewares'
 
 const router = express.Router()
 

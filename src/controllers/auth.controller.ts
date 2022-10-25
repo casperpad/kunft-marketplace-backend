@@ -1,17 +1,20 @@
 import {
+  CLPublicKey,
   decodeBase16,
   verifyMessageSignature,
-  CLPublicKey,
 } from 'casper-js-sdk'
 import Chance from 'chance'
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
 
 import { JWT_EXPIRE, JWT_NAME } from '@/config'
+
 import { User } from '@/models/user.model'
+
+import { generateJwtToken } from '@/services/auth'
+
 import { ApiError } from '@/utils'
 import catchAsync from '@/utils/catchAsync'
-import { generateJwtToken } from '@/services/auth'
 
 export const generateNonce = () => {
   const chance = new Chance()

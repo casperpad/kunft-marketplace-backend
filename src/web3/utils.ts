@@ -1,6 +1,6 @@
 /* eslint-disable no-await-in-loop */
-import * as fs from 'fs'
 import { CasperClient, CLPublicKey, Keys } from 'casper-js-sdk'
+import * as fs from 'fs'
 import find from 'lodash/find'
 
 export const parseTokenMeta = (str: string): Array<[string, string]> =>

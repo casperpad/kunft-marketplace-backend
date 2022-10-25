@@ -1,8 +1,11 @@
 import express from 'express'
 import { StatusCodes } from 'http-status-codes'
+
 import { JWT_NAME } from '@/config'
-import { ApiError } from '@/utils'
+
 import { decodeJwtToken } from '@/services/auth'
+
+import { ApiError } from '@/utils'
 
 export const auth = (
   req: express.Request,

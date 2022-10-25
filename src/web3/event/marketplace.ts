@@ -8,20 +8,24 @@ import {
   EventName,
   EventStream,
 } from 'casper-js-sdk'
-import { Casper } from '@/models'
+
 import {
-  NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS,
+  NEXT_PUBLIC_CASPER_NODE_ADDRESS,
   NEXT_PUBLIC_MARKETPLACE_CONTRACT_PACKAGE_HASH,
 } from '@/config'
-import { MarketplaceEventParser, MarketplaceEvents } from '../marketplace'
-import { getContractPackageHashFromContractHash } from '../utils'
+
+import { Casper } from '@/models'
+
 import {
   collectionServices,
-  tokenServices,
-  saleServices,
   offerServices,
+  saleServices,
+  tokenServices,
 } from '@/services'
+
+import { MarketplaceEventParser, MarketplaceEvents } from '../marketplace'
+import { getContractPackageHashFromContractHash } from '../utils'
 
 export const _startMarketplaceEventStream = async () => {
   try {

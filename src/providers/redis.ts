@@ -1,5 +1,6 @@
-import { REDIS_URL } from '@/config'
 import * as redis from 'redis'
+
+import { REDIS_URL } from '@/config'
 
 // create redis redisClient
 const redisClient = redis.createClient({

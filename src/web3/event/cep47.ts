@@ -1,24 +1,24 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import {
   CEP47Client,
-  CEP47Events,
   CEP47EventParser,
+  CEP47Events,
 } from 'casper-cep47-js-client'
-
 import {
-  EventStream,
-  EventName,
   CLMap,
   CLString,
   CLValueBuilder,
+  EventName,
+  EventStream,
 } from 'casper-js-sdk'
+
 import { Collection } from '@/models/collection.model'
 import { Token } from '@/models/token.model'
 
 import {
-  NEXT_PUBLIC_CASPER_NODE_ADDRESS,
-  NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS,
   NEXT_PUBLIC_CASPER_CHAIN_NAME,
+  NEXT_PUBLIC_CASPER_EVENT_STREAM_ADDRESS,
+  NEXT_PUBLIC_CASPER_NODE_ADDRESS,
 } from '../../config'
 
 export const startCEP47EventStream = async (

@@ -1,5 +1,6 @@
-import mongoose, { Schema, AggregatePaginateModel } from 'mongoose'
+import mongoose, { AggregatePaginateModel, Schema } from 'mongoose'
 import mongooseAggregatePaginate from 'mongoose-aggregate-paginate-v2'
+
 import { TokenDocument } from '@/interfaces/mongoose.gen'
 
 const TokenSchema = new Schema({
