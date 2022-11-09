@@ -1,6 +1,5 @@
 type Collection {
   contractPackageHash: String!
-  contractHash: String!
   slug: String!
   name: String!
   symbol: String!
@@ -32,7 +31,6 @@ type GetCollectionsResponse {
 
 type Slug {
   slug: String!
-  contractHash: String!
 }
 
 type GetCollectionSlugsResponse {
@@ -47,7 +45,6 @@ type Query {
 type Mutation {
   addCollection(
     contractPackageHash: String!
-    contractHash: String!
     slug: String
     symbol: String!
     name: String!

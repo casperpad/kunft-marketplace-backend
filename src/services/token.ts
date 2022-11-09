@@ -499,7 +499,9 @@ export const addUserToken = async (accountHash: string) => {
   let added = 0
   do {
     const { data } = await axios.get<MakeServices.TokensByOwnerResponse>(
-      `https://event-store-api-clarity-testnet.make.services/accounts/${accountHash}/nft-tokens?fields=contract_package&page=${page}&limit=${limit}`,
+      `https://event-store-api-clarity-${
+        NEXT_PUBLIC_CASPER_CHAIN_NAME === 'casper' ? 'mainnet' : 'testnet'
+      }.make.services/accounts/${accountHash}/nft-tokens?fields=contract_package&page=${page}&limit=${limit}`,
     )
 
     const promises = data.data.map(async (token) => {
