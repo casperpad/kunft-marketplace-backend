@@ -10,6 +10,12 @@ const CollectionSchema = new Schema({
     unique: true,
     index: true,
   },
+  contractHash: {
+    type: String,
+    required: true,
+    unique: true,
+    index: true,
+  },
   slug: {
     type: String,
     required: true,

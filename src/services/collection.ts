@@ -142,6 +142,7 @@ export const addCollection = async (
   const symbol = await cep47Client.symbol()
   const collectionDB = new Collection({
     contractPackageHash,
+    contractHash,
     slug: slug || contractPackageHash,
     name,
     symbol,

@@ -111,6 +111,7 @@ export type CasperDocument = mongoose.Document<
  */
 export type Collection = {
   contractPackageHash: string
+  contractHash: string
   slug: string
   deployer?: string
   symbol: string
@@ -207,6 +208,7 @@ export type CollectionDocument = mongoose.Document<
 > &
   CollectionMethods & {
     contractPackageHash: string
+    contractHash: string
     slug: string
     deployer?: string
     symbol: string
