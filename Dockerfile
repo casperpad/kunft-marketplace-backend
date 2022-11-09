@@ -1,5 +1,5 @@
 # Pull Docker Hub base image
-FROM nikolaik/python-nodejs:latest
+FROM nikolaik/python-nodejs:python3.11-nodejs16-alpine
 
 # Set working directory
 WORKDIR /usr/app
