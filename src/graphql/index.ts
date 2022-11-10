@@ -25,7 +25,7 @@ const resolvers = mergeResolvers([collectionResolver, tokenResolver])
 const config: ApolloServerExpressConfig = {
   schema: addResolversToSchema({ schema, resolvers }),
   plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
-
+  persistedQueries: false,
   context: ({ req }) => {
     try {
       // Note: This example uses the `req` argument to access headers,
