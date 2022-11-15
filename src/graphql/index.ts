@@ -26,6 +26,7 @@ const config: ApolloServerExpressConfig = {
   schema: addResolversToSchema({ schema, resolvers }),
   plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
   persistedQueries: false,
+  cache: "bounded",
   context: ({ req }) => {
     try {
       // Note: This example uses the `req` argument to access headers,

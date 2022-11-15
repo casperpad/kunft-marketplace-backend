@@ -4,9 +4,9 @@ export default {
   marketplace: {
     [Chain.MAINNET]: {
       contractPackageHash:
-        'hash-6db1ff432a74c4191eda03327b31c5875efa93891404456e30c3dc1a7b91148e',
+        'hash-cc1b8171004b052ccc998db20f82a1ccca5b16b4c9b64b4b8968e12cbe8f40b0',
       versions: [
-        'hash-293a3700d587190b4a425dcbfb5ac04bf28680d65775bee72269a1478b19ce75',
+        'hash-f4adb2ec4d8a51011b98fd3b5564458d1a02060c690faf1995b9459432948738',
       ],
     },
     [Chain.TESTNET]: {
