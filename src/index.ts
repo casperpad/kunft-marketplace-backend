@@ -14,6 +14,7 @@ import { APP_ENV, MONGODB_URL, PORT, SENTRY_DSN } from '@/config'
 import apiRouter from '@/routes'
 
 import { authLimiter } from './middlewares'
+import { startMarketplaceEventStream } from './web3/event'
 
 import config from '@/graphql'
 
@@ -74,7 +75,7 @@ async function startServer() {
 
   server.listen(PORT, () => {
     try {
-      // startMarketplaceEventStream()
+      startMarketplaceEventStream()
     } catch (err: any) {
       console.error(`***Marketplace EventStream Error***`)
       console.error(err)
