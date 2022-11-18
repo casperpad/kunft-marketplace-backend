@@ -39,9 +39,19 @@ type GetCollectionSlugsResponse {
   data: [Slug!]
 }
 
+type MetadataInfo {
+  trait: String!
+  count: Int!
+}
+
+type GetMetadataInfoResponse {
+  data: [MetadataInfo!]
+}
+
 type Query {
   getCollections(query: String, page: Int, limit: Int): GetCollectionsResponse
   getCollectionSlugs: GetCollectionSlugsResponse
+  getMetadataInfo(slug: String!): GetMetadataInfoResponse
 }
 
 type Mutation {

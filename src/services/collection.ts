@@ -182,3 +182,105 @@ export async function getCollectionOrCreate(
   }
   return collectionNFT
 }
+
+type MetadataInfoResponse = { count: number; trait: string }[]
+
+/**
+ * Returns trait and its count on given collection
+ * @param slug slug of the collection
+ * @returns `MetadataInfoResponse`
+ */
+export const getMetadataInfo = async (slug: string) => {
+  const basePipelineStage: PipelineStage[] = [
+    {
+      $lookup: {
+        from: 'tokens',
+        localField: '_id',
+        foreignField: 'collectionNFT',
+        as: 'tokens',
+        pipeline: [
+          {
+            $project: {
+              metadata: 1,
+              _id: 0,
+            },
+          },
+          {
+            $replaceRoot: {
+              newRoot: '$metadata',
+            },
+          },
+        ],
+      },
+    },
+    {
+      $project: {
+        tokens: 1,
+        _id: 0,
+      },
+    },
+    {
+      $unwind: {
+        path: '$tokens',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: '$tokens',
+      },
+    },
+    {
+      $project: {
+        x: {
+          $objectToArray: '$$CURRENT',
+        },
+      },
+    },
+    {
+      $unwind: {
+        path: '$x',
+      },
+    },
+    {
+      $match: {
+        'x.k': {
+          $ne: '_id',
+        },
+      },
+    },
+    {
+      $group: {
+        _id: '$x.k',
+        values: {
+          $addToSet: '$x.v',
+        },
+      },
+    },
+    {
+      $addFields: {
+        count: {
+          $size: '$values',
+        },
+      },
+    },
+    {
+      $set: {
+        trait: '$_id',
+        values: {
+          $slice: ['$values', 0, 15],
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+      },
+    },
+  ]
+
+  const info: MetadataInfoResponse = await Collection.aggregate([
+    { $match: { slug } },
+    ...basePipelineStage,
+  ])
+  return info
+}
