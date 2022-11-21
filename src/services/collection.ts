@@ -183,7 +183,15 @@ export async function getCollectionOrCreate(
   return collectionNFT
 }
 
-type MetadataInfoResponse = { count: number; trait: string }[]
+type MetadataInfoResponse = {
+  trait: string
+  total: number
+  distinctValues: {
+    value: string | number
+    count: number
+    percent: number
+  }
+}[]
 
 /**
  * Returns trait and its count on given collection
@@ -242,32 +250,55 @@ export const getMetadataInfo = async (slug: string) => {
       },
     },
     {
-      $match: {
-        'x.k': {
-          $ne: '_id',
+      $group: {
+        _id: {
+          k: '$x.k',
+          v: '$x.v',
+        },
+        count: {
+          $sum: 1,
         },
       },
     },
     {
       $group: {
-        _id: '$x.k',
-        values: {
-          $addToSet: '$x.v',
+        _id: '$_id.k',
+        distinctValues: {
+          $addToSet: {
+            value: '$_id.v',
+            count: '$count',
+          },
         },
       },
     },
     {
       $addFields: {
-        count: {
-          $size: '$values',
+        trait: '$_id',
+        distinctValues: {
+          $slice: ['$distinctValues', 0, 15],
+        },
+        total: {
+          $sum: '$distinctValues.count',
         },
       },
     },
     {
-      $set: {
-        trait: '$_id',
-        values: {
-          $slice: ['$values', 0, 15],
+      $addFields: {
+        distinctValues: {
+          $map: {
+            input: '$distinctValues',
+            as: 'distinctValue',
+            in: {
+              $mergeObjects: [
+                '$$distinctValue',
+                {
+                  percent: {
+                    $divide: ['$$distinctValue.count', '$total'],
+                  },
+                },
+              ],
+            },
+          },
         },
       },
     },
