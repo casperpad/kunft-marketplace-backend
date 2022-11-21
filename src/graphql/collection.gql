@@ -1,3 +1,5 @@
+scalar MetadataValue
+
 type Collection {
   contractPackageHash: String!
   contractHash: String!
@@ -39,9 +41,17 @@ type GetCollectionSlugsResponse {
   data: [Slug!]
 }
 
+type DistinctValue {
+  value: MetadataValue!
+  count: Int!
+  # TODO: If Float, graphql-codegen treats as string
+  percent: Int!
+}
+
 type MetadataInfo {
   trait: String!
-  count: Int!
+  total: Int!
+  distinctValues: [DistinctValue!]!
 }
 
 type GetMetadataInfoResponse {
