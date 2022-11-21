@@ -44,8 +44,7 @@ type GetCollectionSlugsResponse {
 type DistinctValue {
   value: MetadataValue!
   count: Int!
-  # TODO: If Float, graphql-codegen treats as string
-  percent: Int!
+  percent: Float!
 }
 
 type MetadataInfo {
