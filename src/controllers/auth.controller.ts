@@ -71,9 +71,14 @@ export const signUp = catchAsync(
       throw Error(`Invalid Signature`)
     }
 
+    const accountHash = publicKey
+      .toAccountHashStr()
+      .slice('account-hash-'.length)
     user = new User({
       name: publicKeyString,
       publicKey: publicKeyString,
+      accountHash,
+      slug: accountHash,
       nonce: generateNonce(),
     })
     await user.save()

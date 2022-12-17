@@ -1,3 +1,5 @@
+import { Metadata } from './basic'
+
 export interface TokensByOwnerResponse {
   data: Token[]
   pageCount: number
@@ -29,9 +31,4 @@ export interface ContractPackage {
   contract_name: null | string
   contract_description: null | string
   timestamp: Date
-}
-
-export interface Metadata {
-  key: string
-  value: string
 }

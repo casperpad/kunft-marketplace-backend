@@ -569,7 +569,9 @@ export type TokenDocument = mongoose.Document<
  * ```
  */
 export type User = {
+  slug: string
   publicKey: string
+  accountHash: string
   verified: boolean
   firstName?: string
   lastName?: string
@@ -660,7 +662,9 @@ export type UserDocument = mongoose.Document<
   UserQueries
 > &
   UserMethods & {
+    slug: string
     publicKey: string
+    accountHash: string
     verified: boolean
     firstName?: string
     lastName?: string

@@ -4,7 +4,23 @@ import validator from 'validator'
 import { UserDocument, UserModel } from '@/interfaces/mongoose.gen'
 
 const UserSchema = new Schema({
+  slug: {
+    type: String,
+    required: true,
+    unique: true,
+    dropDups: true,
+    lowercase: true,
+    index: true,
+  },
   publicKey: {
+    type: String,
+    required: true,
+    unique: true,
+    dropDups: true,
+    lowercase: true,
+    index: true,
+  },
+  accountHash: {
     type: String,
     required: true,
     unique: true,

@@ -13,6 +13,7 @@ import { decodeJwtToken } from '@/services/auth'
 import { collectionResolver } from './collection'
 import permissions from './permissions'
 import { tokenResolver } from './token'
+import { userResolver } from './users'
 
 const schema = applyMiddleware(
   loadSchemaSync('./src/graphql/*.gql', {
@@ -21,12 +22,16 @@ const schema = applyMiddleware(
   permissions,
 )
 
-const resolvers = mergeResolvers([collectionResolver, tokenResolver])
+const resolvers = mergeResolvers([
+  collectionResolver,
+  tokenResolver,
+  userResolver,
+])
 const config: ApolloServerExpressConfig = {
   schema: addResolversToSchema({ schema, resolvers }),
   plugins: [ApolloServerPluginLandingPageGraphQLPlayground({})],
   persistedQueries: false,
-  cache: "bounded",
+  cache: 'bounded',
   context: ({ req }) => {
     try {
       // Note: This example uses the `req` argument to access headers,

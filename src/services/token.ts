@@ -17,6 +17,7 @@ import {
 } from '../config'
 
 import { MakeServices } from '@/types'
+import { TokensByContractPackageHashResponse } from '@/types/make-services'
 
 import { CollectionDocument, TokenDocument } from '@/interfaces/mongoose.gen'
 import { getContractHashFromContractPackageHash } from '@/web3/utils'
@@ -494,12 +495,13 @@ export const favoriteToken = async (
 }
 
 export const addUserToken = async (accountHash: string) => {
+  console.log(`adding token ${accountHash}`)
   let page = 1
   const limit = 10
   let added = 0
   do {
     const { data } = await axios.get<MakeServices.TokensByOwnerResponse>(
-      `https://event-store-api-clarity-testnet.make.services/accounts/${accountHash}/nft-tokens?fields=contract_package&page=${page}&limit=${limit}`,
+      `https://event-store-api-clarity-mainnet.make.services/accounts/${accountHash}/nft-tokens?fields=contract_package&page=${page}&limit=${limit}`,
     )
 
     const promises = data.data.map(async (token) => {
@@ -520,6 +522,42 @@ export const addUserToken = async (accountHash: string) => {
     added += result.filter((r) => r).length
     if (data.pageCount === page) break
     page += 1
+    // eslint-disable-next-line no-constant-condition
+  } while (true)
+  return added
+}
+
+export const addTokensByContractPackageHash = async (
+  contractPackageHash: string,
+) => {
+  let page = 1
+  const limit = 10
+  let added = 0
+  do {
+    const { data } = await axios.get<TokensByContractPackageHashResponse>(
+      `https://event-store-api-clarity-mainnet.make.services/contract-packages/${contractPackageHash}/nft-tokens?page=${page}&limit=${limit}`,
+    )
+
+    const promises = data.data.map(async (token) => {
+      const metadata = {} as any
+      token.metadata.forEach((meta) => {
+        metadata[meta.key] = meta.value
+      })
+
+      const result = await addTokenByContractPackageHash(
+        token.contract_package_hash,
+        token.token_id,
+        metadata,
+        token.owner_account_hash,
+      )
+      return result
+    })
+
+    const result = await Promise.all(promises)
+    added += result.filter((r) => r).length
+    if (data.pageCount === page) break
+    page += 1
+
     // eslint-disable-next-line no-constant-condition
   } while (true)
   return added
