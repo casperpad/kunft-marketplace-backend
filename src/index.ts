@@ -14,7 +14,7 @@ import { APP_ENV, MONGODB_URL, PORT, SENTRY_DSN } from '@/config'
 import apiRouter from '@/routes'
 
 import { authLimiter } from './middlewares'
-import { addUserFields } from './services/user'
+import { startMarketplaceEventStream } from './web3/event'
 
 import config from '@/graphql'
 
@@ -49,7 +49,6 @@ async function startServer() {
   // TracingHandler creates a trace for every incoming request
   server.use(Sentry.Handlers.tracingHandler())
 
-  // server.use(compression())
   server.use(cors())
   server.use(express.json({ limit: '25mb' }))
   server.use(express.urlencoded({ limit: '25mb', extended: true }))
@@ -73,17 +72,26 @@ async function startServer() {
 
   server.use(Sentry.Handlers.errorHandler())
 
+  server.use(function onError(
+    err: Error,
+    req: express.Request,
+    res: express.Response,
+  ) {
+    // The error id is attached to `res.sentry` to be returned
+    // and optionally displayed to the user for support.
+    res.statusCode = 500
+    res.end((res as any).sentry + '\n')
+  })
+
   server.listen(PORT, () => {
     try {
-      // startMarketplaceEventStream()
+      startMarketplaceEventStream()
     } catch (err: any) {
       console.error(`***Marketplace EventStream Error***`)
       console.error(err)
       console.error(`*** ***`)
     }
-    addUserFields()
 
-    // startCEP47EventStream()
     console.info(`Server is running on ${PORT}`)
   })
 }
@@ -91,6 +99,5 @@ async function startServer() {
 startServer()
 
 process.on('uncaughtException', function (err) {
-  console.error(err)
-  console.log('Node NOT Exiting...')
+  Sentry.captureException(err)
 })
