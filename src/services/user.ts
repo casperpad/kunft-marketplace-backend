@@ -67,6 +67,7 @@ export const getUserInfo = async (input: GetUserInfoInput) => {
         ownedTokens: 1,
         name: 1,
         email: 1,
+        avatar: 1,
         emailVerified: {
           $cond: {
             if: {
@@ -93,6 +94,8 @@ export const getUserInfo = async (input: GetUserInfoInput) => {
 
   if (users.length !== 1)
     throw new ApiError(StatusCodes.NOT_FOUND, 'User not exist.')
+
+  console.log(users[0])
 
   return users[0]
 }
